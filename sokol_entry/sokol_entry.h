@@ -52,8 +52,10 @@ extern bool sg_can_control_window();
 extern bool sg_can_go_fullscreen();
 extern void sg_set_window_position(float x, float y);
 extern void sg_set_window_size(float width, float height);
+extern bool sg_get_window_position(float *x, float *y);
 extern float sg_get_window_x();
 extern float sg_get_window_y();
+extern bool sg_get_window_size(int *width, int *height);
 extern int sg_get_window_width();
 extern int sg_get_window_height();
 extern void sg_set_window_resizable(bool);
@@ -95,37 +97,3 @@ extern void sg_on_mouse_btn_up(sg_mouse_btn_func);
 extern void sg_on_mouse_pos(sg_mouse_pos_func);
 /* register mouse wheel callback */
 extern void sg_on_mouse_wheel(sg_mouse_wheel_func);
-
-#ifdef EMSCRIPTEN
-#define SOKOL_EMSCRIPTEN
-#elif defined(_WIN32)
-#define SOKOL_WINDOWS
-#elif defined(__ANDROID__)
-#define SOKOL_ANDROID 
-#elif defined(__APPLE__)
-    #ifdef TARGET_IPHONE_SIMULATOR
-    // iOS Simulator
-    #define SOKOL_IOS_SIMULATOR
-
-    #define SOKOL_IOS
-
-    #elif TARGET_OS_IPHONE
-    // iOS device
-    #define SOKOL_IOS
-
-    #elif TARGET_OS_MAC
-    // Other kinds of Mac OS
-    #define SOKOL_MACOS 1
-    #else
-    #define SOKOL_MACOS 1
-    #endif
-#endif
-
-
-
-#ifdef SOKOL_OSX
-
-#include "_sg_entry.osx.impl.h"
-
-#endif
-
