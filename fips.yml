@@ -1,2 +1,4 @@
 exports:
+  modules:
+    sokol_entry: sokol_entry
   header-dirs: [ . ]
