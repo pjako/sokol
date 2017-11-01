@@ -1,10 +1,27 @@
 #pragma once
-#ifndef SOKOL_CANVAS_ELEMENT
-#define SOKOL_CANVAS_ELEMENT = "#canvas"
-#endif
 #include <wchar.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+
+typedef struct {
+    bool keyboard;
+    bool touch;
+    bool mouse;
+    bool gamepad;
+    bool gyro;
+} sg_platform_input_features;
+
+typedef struct {
+    bool position;
+    bool resize;
+    bool framerate;
+} sg_platform_control;
+
+typedef struct {
+    sg_platform_input_features input;
+    sg_platform_control control;
+} sg_platform_features;
 
 typedef struct {
     /* Metal-specific */
@@ -73,7 +90,9 @@ extern void move_window_to_foreground();
 
 // misc
 extern void sg_request_attention();
-
+typedef void(*sg_file_drop_func)(char *name, int index, int num_files);
+extern void sg_on_file_drop(sg_file_drop_func);
+extern float _sg_get_time();
 
 
 // input
@@ -97,3 +116,35 @@ extern void sg_on_mouse_btn_up(sg_mouse_btn_func);
 extern void sg_on_mouse_pos(sg_mouse_pos_func);
 /* register mouse wheel callback */
 extern void sg_on_mouse_wheel(sg_mouse_wheel_func);
+
+// touch
+#ifndef SOKOL_MAX_TOUCHES
+#define SOKOL_MAX_TOUCHES 10
+#endif
+typedef struct {
+    int identifier;
+    float x;
+    float y;
+    bool changed;
+} sg_touch;
+typedef struct {
+    sg_touch touches[SOKOL_MAX_TOUCHES];
+    int num_touches;
+    int time;
+} sg_touch_event;
+typedef void(*touch_event_func)(const sg_touch_event*);
+enum sg_touch_event_type {
+    sg_touch_event_none = 0,
+    sg_touch_event_begin,
+    sg_touch_event_move,
+    sg_touch_event_cancel,
+    sg_touch_event_end,
+};
+extern void sg_on_touch_begin(touch_event_func);
+extern void sg_on_touch_move(touch_event_func);
+extern void sg_on_touch_cancel(touch_event_func);
+extern void sg_on_touch_end(touch_event_func);
+
+
+
+
