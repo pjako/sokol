@@ -12,14 +12,19 @@
 @end
 @interface SokolViewDelegate<MTKViewDelegate> : NSObject
 @end
+#ifndef SOKOL_METAL_MACOS
+@interface SokolGLView : NSView /*<NSTextInputClient>*/
+@end
+#else
 @interface SokolMTKView : MTKView
 @end
-
+#endif
 
 float _sg_restore_rect_x;
 float _sg_restore_rect_y;
 int _sg_restore_rect_width;
 int _sg_restore_rect_height;
+static float _sg_desired_frame_time;
 static bool _sg_window_minimized;
 static bool _sg_window_maximized;
 static bool _sg_is_window_fullscreen;
@@ -48,18 +53,68 @@ static bool _sg_mouse_locked;
 
 static id _sg_window_delegate;
 static id _sg_window;
+/* metal specific */
+#ifndef SOKOL_METAL_MACOS
+static SokolGLView* _sg_gl_view;
+static id _sg_gl_context;
+id _sg_pixel_format;
+#else
 static id<MTLDevice> _sg_mtl_device;
 static id _sg_mtk_view_delegate;
 static MTKView* _sg_mtk_view;
+#endif
+/* misc */
+static sg_file_drop_func _sg_on_file_drop;
 
-//------------------------------------------------------------------------------
-@implementation SokolApp
+void _sg_update_window();
+float _sg_default_display_scale();
+
+#ifndef SOKOL_METAL_MACOS
+void _sg_process_events() {
+    @autoreleasepool {
+        while (true) {
+            NSEvent *event = [NSApp
+                    nextEventMatchingMask:NSAnyEventMask
+                                untilDate:[NSDate distantPast]
+                                   inMode:NSDefaultRunLoopMode
+                                  dequeue:YES];
+
+            if (event == nil) {
+                break;
+            }
+
+            [NSApp sendEvent:event];
+        }
+    }
+	//[autoreleasePool drain];
+	//autoreleasePool = [[NSAutoreleasePool alloc] init];
+}
+
+void _sg_run() {
+    while(true) {
+        const float startTime = _sg_get_time();
+        _sg_process_events();
+        if (_sg_frame_func) {
+            _sg_frame_func();
+        }
+        const float timeLeftInFrame = _sg_desired_frame_time - (_sg_get_time() - startTime);
+        if (timeLeftInFrame > 0.0f) {
+            [NSThread sleepForTimeInterval:timeLeftInFrame];
+        }
+    }
+}
+#endif
 
 int main(int argc, char * argv[]) {
     //_sg_is_window_fullscreen = false;
     sg_main();
+    return 0;
 }
 
+
+
+//------------------------------------------------------------------------------
+@implementation SokolApp
 
 // From http://cocoadev.com/index.pl?GameKeyboardHandlingAlmost
 // This works around an AppKit bug, where key up events while holding
@@ -74,7 +129,7 @@ int main(int argc, char * argv[]) {
 }
 @end
 
-
+#ifdef SOKOL_METAL_MACOS
 /* get an MTLRenderPassDescriptor from the MTKView */
 const void* sg_mtk_get_render_pass_descriptor() {
     return CFBridgingRetain([_sg_mtk_view currentRenderPassDescriptor]);
@@ -84,7 +139,7 @@ const void* sg_mtk_get_render_pass_descriptor() {
 const void* sg_mtk_get_drawable() {
     return CFBridgingRetain([_sg_mtk_view currentDrawable]);
 }
-
+#endif
 //------------------------------------------------------------------------------
 @implementation SokolAppDelegate
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
@@ -111,6 +166,7 @@ const void* sg_mtk_get_drawable() {
     [_sg_window setDelegate:_sg_window_delegate];
 
     // view delegate, MTKView and Metal device
+    #ifdef SOKOL_METAL_MACOS
     _sg_mtk_view_delegate = [[SokolViewDelegate alloc] init];
     _sg_mtl_device = MTLCreateSystemDefaultDevice();
     _sg_mtk_view = [[SokolMTKView alloc] init];
@@ -124,17 +180,77 @@ const void* sg_mtk_get_drawable() {
     CGSize drawable_size = { (CGFloat) _sg_width, (CGFloat) _sg_height };
     [_sg_mtk_view setDrawableSize:drawable_size];
     [_sg_mtk_view setSampleCount:_sg_sample_count];
-    [_sg_window makeKeyAndOrderFront:nil];
-
     // call the init function
     const sg_gfx_init_data ctx = {
         .mtl_device = CFBridgingRetain(_sg_mtl_device),
         .mtl_renderpass_descriptor_cb = sg_mtk_get_render_pass_descriptor,
         .mtl_drawable_cb = sg_mtk_get_drawable,
     };
-    
-    _sg_init_func(&ctx);
-    [_sg_window toggleFullScreen:nil];
+    if (_sg_init_func) {
+        _sg_init_func(&ctx);
+    }
+    [_sg_window makeKeyAndOrderFront:nil];
+
+    #else
+
+	if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6 && _sg_default_display_scale() > 1.0f) {
+		[_sg_gl_view setWantsBestResolutionOpenGLSurface:YES];
+		//if (current_videomode.resizable)
+		[_sg_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+	}
+
+// Fail if a robustness strategy was requested
+    unsigned int attributeCount = 0;
+	NSOpenGLPixelFormatAttribute attributes[40];
+    // OS X needs non-zero color size, so set resonable values
+	const int colorBits = 32;
+#define ADD_ATTR(x) \
+	{ attributes[attributeCount++] = x; }
+#define ADD_ATTR2(x, y) \
+	{                   \
+		ADD_ATTR(x);    \
+		ADD_ATTR(y);    \
+	}
+	ADD_ATTR(NSOpenGLPFADoubleBuffer);
+	ADD_ATTR(NSOpenGLPFAClosestPolicy);
+
+	//we now need OpenGL 3 or better, maybe even change this to 3_3Core ?
+	ADD_ATTR2(NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core);
+
+	ADD_ATTR2(NSOpenGLPFAColorSize, colorBits);
+
+	ADD_ATTR2(NSOpenGLPFADepthSize, 24);
+
+	ADD_ATTR2(NSOpenGLPFAStencilSize, 8);
+
+	// NOTE: All NSOpenGLPixelFormats on the relevant cards support sRGB
+	//       frambuffer, so there's no need (and no way) to request it
+
+	ADD_ATTR(0);
+
+#undef ADD_ATTR
+#undef ADD_ATTR2
+
+	_sg_pixel_format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+	// ERR_FAIL_COND(_sg_pixel_format == nil);
+
+	_sg_gl_context = [[NSOpenGLContext alloc] initWithFormat:_sg_pixel_format shareContext:nil];
+
+	// ERR_FAIL_COND(context == nil);
+
+	[_sg_gl_context setView:_sg_gl_view];
+
+	[_sg_gl_context makeCurrentContext];
+
+	[NSApp activateIgnoringOtherApps:YES];
+
+    _sg_update_window();
+    if (_sg_init_func) {
+        _sg_init_func(&(sg_gfx_init_data) {});
+    }
+    [_sg_window makeKeyAndOrderFront:nil];
+    _sg_run();
+    #endif
 }
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
     return YES;
@@ -209,16 +325,22 @@ const void* sg_mtk_get_drawable() {
 - (void)mtkView:(nonnull MTKView*)view drawableSizeWillChange:(CGSize)size {
     // FIXME
 }
-
+#ifdef SOKOL_METAL_MACOS
 - (void)drawInMTKView:(nonnull MTKView*)view {
     @autoreleasepool {
         _sg_frame_func();
     }
 }
+#endif
 @end
 
 //------------------------------------------------------------------------------
+
+#ifndef SOKOL_METAL_MACOS
+@implementation SokolGLView
+#else
 @implementation SokolMTKView
+#endif
 
 - (BOOL) isOpaque {
     return YES;
@@ -230,6 +352,20 @@ const void* sg_mtk_get_drawable() {
 
 - (BOOL)acceptsFirstResponder {
     return YES;
+}
+
+- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+    if (_sg_on_file_drop) {
+        NSPasteboard *pboard = [sender draggingPasteboard];
+        NSArray *filenames = [pboard propertyListForType:NSFilenamesPboardType];
+        for (unsigned long i = 0; i < filenames.count; i++) {
+            NSString *ns = [filenames objectAtIndex:i];
+            char *utfs = strdup([ns UTF8String]);
+            _sg_on_file_drop(utfs, i, filenames.count);
+            free(utfs);
+        }
+    }
+	return NO;
 }
 
 - (void)mouseDown:(NSEvent*)event {
@@ -250,7 +386,11 @@ const void* sg_mtk_get_drawable() {
 
 - (void)mouseMoved:(NSEvent*)event {
     if (_sg_mouse_pos_func) {
+#ifdef SOKOL_METAL_MACOS
         const NSRect content_rect = [_sg_mtk_view frame];
+#else
+        const NSRect content_rect = [_sg_gl_view frame];
+#endif
         const NSPoint pos = [event locationInWindow];
         _sg_mouse_pos_func(pos.x, content_rect.size.height - pos.y);
     }
@@ -324,13 +464,7 @@ void sg_start(int w, int h, int smp_count, const char* title, sg_init_func ifun,
     _sg_init_func = ifun;
     _sg_frame_func = ffun;
     _sg_shutdown_func = sfun;
-    _sg_key_down_func = 0;
-    _sg_key_up_func = 0;
-    _sg_char_func = 0;
-    _sg_mouse_btn_down_func = 0;
-    _sg_mouse_btn_up_func = 0;
-    _sg_mouse_pos_func = 0;
-    _sg_mouse_wheel_func = 0;
+    _sg_desired_frame_time = 1.0f / 60.0f;
     [SokolApp sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     id delg = [[SokolAppDelegate alloc] init];
@@ -633,8 +767,14 @@ float sg_get_window_y() {
 
 /* return current MTKView drawable width */
 bool sg_get_window_size(int *width, int *height) {
+#ifdef SOKOL_METAL_MACOS
     *width = (int) [_sg_mtk_view drawableSize].width;
     *height = (int) [_sg_mtk_view drawableSize].height;
+#else
+    NSSize size = _sg_gl_view.frame.size;
+    *width = (int) size.width;
+    *height = (int) size.height;
+#endif
     return true;
 }
 
@@ -642,14 +782,27 @@ void sg_request_attention() {
     [NSApp requestUserAttention:NSCriticalRequest];
 }
 
+float _sg_get_time() {
+    return (float) CACurrentMediaTime();
+}
+
 /* return current MTKView drawable width */
 int sg_get_window_width() {
-    return (int) [_sg_mtk_view drawableSize].width;
+    int width, height;
+    sg_get_window_size(&width, &height);
+    return width;
 }
 
 /* return current MTKView drawable height */
 int sg_get_window_height() {
-    return (int) [_sg_mtk_view drawableSize].height;
+    int width, height;
+    sg_get_window_size(&width, &height);
+    return height;
+}
+
+/* misc */
+void sg_on_file_drop(sg_file_drop_func fn) {
+    _sg_on_file_drop = fn;
 }
 
 /* register input callbacks */
@@ -699,4 +852,15 @@ void sg_set_mouse_hidden(bool hidden) {
         CGDisplayShowCursor(kCGDirectMainDisplay);
         CGAssociateMouseAndMouseCursorPosition(true);
     }
+}
+
+/* touch */
+
+void sg_on_touch_begin(touch_event_func fn) {
+}
+void sg_on_touch_move(touch_event_func fn) {
+}
+void sg_on_touch_cancel(touch_event_func fn) {
+}
+void sg_on_touch_end(touch_event_func fn) {
 }
