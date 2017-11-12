@@ -145,6 +145,20 @@ extern void sg_on_touch_move(touch_event_func);
 extern void sg_on_touch_cancel(touch_event_func);
 extern void sg_on_touch_end(touch_event_func);
 
-
-
+/* open file for reading */
+extern void* sg_open_read_file(const char* path);
+/* open file for writing */
+extern void* sg_open_write_file(const char* path);
+/* write to file, return number of bytes actually written */
+extern void* sg_write_file(void* f, const void* ptr, int numBytes);
+/* read from file, return number of bytes actually read */
+extern int sg_read_file(void* f, void* ptr, int numBytes);
+/* seek from start of file */
+extern bool sg_seek_file(void* f, int offset);
+/* get file size */
+extern int sg_get_file_size(void* f);
+/* close file */
+extern void sg_close_file(void* f);
+/* get the executeable path */
+extern void sg_get_executable_dir(char* nameBuffer, int strLength);
 

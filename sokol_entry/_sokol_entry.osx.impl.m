@@ -354,6 +354,24 @@ const void* sg_mtk_get_drawable() {
     return YES;
 }
 
+- (id)init {
+    self = [super init];
+    //trackingArea = nil;
+    //imeMode = false;
+    [self updateTrackingAreas];
+    [self registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+    //&&markedText = [[NSMutableAttributedString alloc] init];
+    return self;
+}
+
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
+    return NSDragOperationCopy;
+}
+
+- (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
+    return NSDragOperationCopy;
+}
+
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     if (_sg_on_file_drop) {
         NSPasteboard *pboard = [sender draggingPasteboard];
@@ -361,9 +379,17 @@ const void* sg_mtk_get_drawable() {
         for (unsigned long i = 0; i < filenames.count; i++) {
             NSString *ns = [filenames objectAtIndex:i];
             char *utfs = strdup([ns UTF8String]);
+            NSFileWrapper *fileContents = [pboard readFileWrapper];
+            NSData *data = [fileContents regularFileContents];
+            NSUInteger len = [data length];
+            Byte *byteData = (Byte*)malloc(len);
+            memcpy(byteData, [data bytes], len);
             _sg_on_file_drop(utfs, i, filenames.count);
             free(utfs);
         }
+        
+        //NSFileWrapper *fileContents = [pboard readFileWrapper];
+        // Perform operation using the file’s contents
     }
 	return NO;
 }
@@ -864,3 +890,38 @@ void sg_on_touch_cancel(touch_event_func fn) {
 }
 void sg_on_touch_end(touch_event_func fn) {
 }
+
+/* open file for reading */
+void* sg_open_read_file(const char* path) {
+
+}
+/* open file for writing */
+void* sg_open_write_file(const char* path) {
+
+}
+/* write to file, return number of bytes actually written */
+void* sg_write_file(void* f, const void* ptr, int numBytes) {
+
+}
+/* read from file, return number of bytes actually read */
+int sg_read_file(void* f, void* ptr, int numBytes) {
+
+}
+/* seek from start of file */
+bool sg_seek_file(void* f, int offset) {
+
+}
+/* get file size */
+extern int sg_get_file_size(void* f) {
+
+}
+/* close file */
+void sg_close_file(void* f) {
+
+}
+/* get the executeable path */
+void sg_get_executable_dir(char* nameBuffer, int strLength) {
+
+}
+
+
