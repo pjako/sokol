@@ -20,57 +20,57 @@
 @end
 #endif
 
-float _sg_restore_rect_x;
-float _sg_restore_rect_y;
-int _sg_restore_rect_width;
-int _sg_restore_rect_height;
-static float _sg_desired_frame_time;
-static bool _sg_window_minimized;
-static bool _sg_window_maximized;
-static bool _sg_is_window_fullscreen;
-static int _sg_width;
-static int _sg_height;
-static int _sg_sample_count;
-static const char* _sg_window_title;
-static sg_init_func _sg_init_func;
-static sg_frame_func _sg_frame_func;
-static sg_shutdown_func _sg_shutdown_func;
+float _se_restore_rect_x;
+float _se_restore_rect_y;
+int _se_restore_rect_width;
+int _se_restore_rect_height;
+static float _se_desired_frame_time;
+static bool _se_window_minimized;
+static bool _se_window_maximized;
+static bool _se_is_window_fullscreen;
+static int _se_width;
+static int _se_height;
+static int _se_sample_count;
+static const char* _se_window_title;
+static se_init_func _se_init_func;
+static se_frame_func _se_frame_func;
+static se_shutdown_func _se_shutdown_func;
 /* window event callback */
-static sg_window_minimize_func _sg_on_window_minimize;
-static sg_window_maximize_func _sg_on_window_maximize;
-static sg_window_move_func _sg_on_window_move;
-static sg_window_resize_func _sg_on_window_resize;
-static sg_window_active_func _sg_on_window_active;
+static se_window_minimize_func _se_on_window_minimize;
+static se_window_maximize_func _se_on_window_maximize;
+static se_window_move_func _se_on_window_move;
+static se_window_resize_func _se_on_window_resize;
+static se_window_active_func _se_on_window_active;
 /* input event callbacks */
-static sg_key_func _sg_key_down_func;
-static sg_key_func _sg_key_up_func;
-static sg_char_func _sg_char_func;
-static sg_mouse_btn_func _sg_mouse_btn_down_func;
-static sg_mouse_btn_func _sg_mouse_btn_up_func;
-static sg_mouse_pos_func _sg_mouse_pos_func;
-static sg_mouse_wheel_func _sg_mouse_wheel_func;
-static bool _sg_mouse_locked;
+static se_key_func _se_key_down_func;
+static se_key_func _se_key_up_func;
+static se_char_func _se_char_func;
+static se_mouse_btn_func _se_mouse_btn_down_func;
+static se_mouse_btn_func _se_mouse_btn_up_func;
+static se_mouse_pos_func _se_mouse_pos_func;
+static se_mouse_wheel_func _se_mouse_wheel_func;
+static bool _se_mouse_locked;
 
-static id _sg_window_delegate;
-static id _sg_window;
+static id _se_window_delegate;
+static id _se_window;
 /* metal specific */
 #ifndef SOKOL_METAL_MACOS
-static SokolGLView* _sg_gl_view;
-static id _sg_gl_context;
-id _sg_pixel_format;
+static SokolGLView* _se_gl_view;
+static id _se_gl_context;
+id _se_pixel_format;
 #else
-static id<MTLDevice> _sg_mtl_device;
-static id _sg_mtk_view_delegate;
-static MTKView* _sg_mtk_view;
+static id<MTLDevice> _se_mtl_device;
+static id _se_mtk_view_delegate;
+static MTKView* _se_mtk_view;
 #endif
 /* misc */
-static sg_file_drop_func _sg_on_file_drop;
+static se_file_drop_func _se_on_file_drop;
 
-void _sg_update_window();
-float _sg_default_display_scale();
+void _se_update_window();
+float _se_default_display_scale();
 
 #ifndef SOKOL_METAL_MACOS
-void _sg_process_events() {
+void _se_process_events() {
     @autoreleasepool {
         while (true) {
             NSEvent *event = [NSApp
@@ -90,14 +90,14 @@ void _sg_process_events() {
 	//autoreleasePool = [[NSAutoreleasePool alloc] init];
 }
 
-void _sg_run() {
+void _se_run() {
     while(true) {
-        const float startTime = _sg_get_time();
-        _sg_process_events();
-        if (_sg_frame_func) {
-            _sg_frame_func();
+        const float startTime = _se_get_time();
+        _se_process_events();
+        if (_se_frame_func) {
+            _se_frame_func();
         }
-        const float timeLeftInFrame = _sg_desired_frame_time - (_sg_get_time() - startTime);
+        const float timeLeftInFrame = _se_desired_frame_time - (_se_get_time() - startTime);
         if (timeLeftInFrame > 0.0f) {
             [NSThread sleepForTimeInterval:timeLeftInFrame];
         }
@@ -106,8 +106,8 @@ void _sg_run() {
 #endif
 
 int main(int argc, char * argv[]) {
-    //_sg_is_window_fullscreen = false;
-    sg_main();
+    //_se_is_window_fullscreen = false;
+    se_main();
     return 0;
 }
 
@@ -131,20 +131,20 @@ int main(int argc, char * argv[]) {
 
 #ifdef SOKOL_METAL_MACOS
 /* get an MTLRenderPassDescriptor from the MTKView */
-const void* sg_mtk_get_render_pass_descriptor() {
-    return CFBridgingRetain([_sg_mtk_view currentRenderPassDescriptor]);
+const void* se_mtk_get_render_pass_descriptor() {
+    return CFBridgingRetain([_se_mtk_view currentRenderPassDescriptor]);
 }
 
 /* get the current CAMetalDrawable from MTKView */
-const void* sg_mtk_get_drawable() {
-    return CFBridgingRetain([_sg_mtk_view currentDrawable]);
+const void* se_mtk_get_drawable() {
+    return CFBridgingRetain([_se_mtk_view currentDrawable]);
 }
 #endif
 //------------------------------------------------------------------------------
 @implementation SokolAppDelegate
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
     // window delegate
-    _sg_window_delegate = [[SokolWindowDelegate alloc] init];
+    _se_window_delegate = [[SokolWindowDelegate alloc] init];
 
     // window
     const NSUInteger style =
@@ -152,51 +152,51 @@ const void* sg_mtk_get_drawable() {
         NSWindowStyleMaskClosable |
         NSWindowStyleMaskMiniaturizable |
         NSWindowStyleMaskResizable;
-    _sg_window = [[NSWindow alloc]
-        initWithContentRect:NSMakeRect(0, 0, _sg_width, _sg_height)
+    _se_window = [[NSWindow alloc]
+        initWithContentRect:NSMakeRect(0, 0, _se_width, _se_height)
         styleMask:style
         backing:NSBackingStoreBuffered
         defer:NO];
     
-    [_sg_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
-    [_sg_window setTitle:[NSString stringWithUTF8String:_sg_window_title]];
-    [_sg_window setAcceptsMouseMovedEvents:YES];
-    [_sg_window center];
-    [_sg_window setRestorable:YES];
-    [_sg_window setDelegate:_sg_window_delegate];
+    [_se_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+    [_se_window setTitle:[NSString stringWithUTF8String:_se_window_title]];
+    [_se_window setAcceptsMouseMovedEvents:YES];
+    [_se_window center];
+    [_se_window setRestorable:YES];
+    [_se_window setDelegate:_se_window_delegate];
 
     // view delegate, MTKView and Metal device
     #ifdef SOKOL_METAL_MACOS
-    _sg_mtk_view_delegate = [[SokolViewDelegate alloc] init];
-    _sg_mtl_device = MTLCreateSystemDefaultDevice();
-    _sg_mtk_view = [[SokolMTKView alloc] init];
-    [_sg_window setContentView:_sg_mtk_view];
-    [_sg_mtk_view setPreferredFramesPerSecond:60];
-    [_sg_mtk_view setDelegate:_sg_mtk_view_delegate];
-    [_sg_mtk_view setDevice: _sg_mtl_device];
-    [[_sg_mtk_view layer] setMagnificationFilter:kCAFilterNearest];
-    [_sg_mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
-    [_sg_mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
-    CGSize drawable_size = { (CGFloat) _sg_width, (CGFloat) _sg_height };
-    [_sg_mtk_view setDrawableSize:drawable_size];
-    [_sg_mtk_view setSampleCount:_sg_sample_count];
+    _se_mtk_view_delegate = [[SokolViewDelegate alloc] init];
+    _se_mtl_device = MTLCreateSystemDefaultDevice();
+    _se_mtk_view = [[SokolMTKView alloc] init];
+    [_se_window setContentView:_se_mtk_view];
+    [_se_mtk_view setPreferredFramesPerSecond:60];
+    [_se_mtk_view setDelegate:_se_mtk_view_delegate];
+    [_se_mtk_view setDevice: _se_mtl_device];
+    [[_se_mtk_view layer] setMagnificationFilter:kCAFilterNearest];
+    [_se_mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [_se_mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
+    CGSize drawable_size = { (CGFloat) _se_width, (CGFloat) _se_height };
+    [_se_mtk_view setDrawableSize:drawable_size];
+    [_se_mtk_view setSampleCount:_se_sample_count];
     // call the init function
-    const sg_gfx_init_data ctx = {
-        .mtl_device = CFBridgingRetain(_sg_mtl_device),
-        .mtl_renderpass_descriptor_cb = sg_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = sg_mtk_get_drawable,
+    const se_gfx_init_data ctx = {
+        .mtl_device = CFBridgingRetain(_se_mtl_device),
+        .mtl_renderpass_descriptor_cb = se_mtk_get_render_pass_descriptor,
+        .mtl_drawable_cb = se_mtk_get_drawable,
     };
-    if (_sg_init_func) {
-        _sg_init_func(&ctx);
+    if (_se_init_func) {
+        _se_init_func(&ctx);
     }
-    [_sg_window makeKeyAndOrderFront:nil];
+    [_se_window makeKeyAndOrderFront:nil];
 
     #else
 
-	if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6 && _sg_default_display_scale() > 1.0f) {
-		[_sg_gl_view setWantsBestResolutionOpenGLSurface:YES];
+	if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6 && _se_default_display_scale() > 1.0f) {
+		[_se_gl_view setWantsBestResolutionOpenGLSurface:YES];
 		//if (current_videomode.resizable)
-		[_sg_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+		[_se_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
 	}
 
 // Fail if a robustness strategy was requested
@@ -231,25 +231,25 @@ const void* sg_mtk_get_drawable() {
 #undef ADD_ATTR
 #undef ADD_ATTR2
 
-	_sg_pixel_format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
-	// ERR_FAIL_COND(_sg_pixel_format == nil);
+	_se_pixel_format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+	// ERR_FAIL_COND(_se_pixel_format == nil);
 
-	_sg_gl_context = [[NSOpenGLContext alloc] initWithFormat:_sg_pixel_format shareContext:nil];
+	_se_gl_context = [[NSOpenGLContext alloc] initWithFormat:_se_pixel_format shareContext:nil];
 
 	// ERR_FAIL_COND(context == nil);
 
-	[_sg_gl_context setView:_sg_gl_view];
+	[_se_gl_context setView:_se_gl_view];
 
-	[_sg_gl_context makeCurrentContext];
+	[_se_gl_context makeCurrentContext];
 
 	[NSApp activateIgnoringOtherApps:YES];
 
-    _sg_update_window();
-    if (_sg_init_func) {
-        _sg_init_func(&(sg_gfx_init_data) {});
+    _se_update_window();
+    if (_se_init_func) {
+        _se_init_func(&(se_gfx_init_data) {});
     }
-    [_sg_window makeKeyAndOrderFront:nil];
-    _sg_run();
+    [_se_window makeKeyAndOrderFront:nil];
+    _se_run();
     #endif
 }
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
@@ -260,60 +260,60 @@ const void* sg_mtk_get_drawable() {
 //------------------------------------------------------------------------------
 @implementation SokolWindowDelegate
 - (BOOL)windowShouldClose:(id)sender {
-    if (_sg_shutdown_func) {
-        _sg_shutdown_func();
+    if (_se_shutdown_func) {
+        _se_shutdown_func();
     }
     return YES;
 }
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
-	_sg_is_window_fullscreen = true;
+	_se_is_window_fullscreen = true;
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-	_sg_is_window_fullscreen = false;
+	_se_is_window_fullscreen = false;
 }
 #endif // MAC_OS_X_VERSION_MAX_ALLOWED
 
 - (void)windowDidResize:(NSNotification*)notification {
-    if (_sg_on_window_resize) {
-        _sg_on_window_resize(
-            sg_get_window_width(),
-            sg_get_window_height()
+    if (_se_on_window_resize) {
+        _se_on_window_resize(
+            se_get_window_width(),
+            se_get_window_height()
         );
     }
 }
 
 - (void)windowDidMove:(NSNotification*)notification {
-    if (_sg_on_window_move) {
-        _sg_on_window_move(
-            sg_get_window_x(),
-            sg_get_window_y()
+    if (_se_on_window_move) {
+        _se_on_window_move(
+            se_get_window_x(),
+            se_get_window_y()
         );
     }
 }
 
 - (void)windowDidMiniaturize:(NSNotification*)notification {
-    if (_sg_on_window_minimize) {
-        _sg_on_window_minimize(true);
+    if (_se_on_window_minimize) {
+        _se_on_window_minimize(true);
     }
 }
 
 - (void)windowDidDeminiaturize:(NSNotification*)notification {
-    if (_sg_on_window_minimize) {
-        _sg_on_window_minimize(false);
+    if (_se_on_window_minimize) {
+        _se_on_window_minimize(false);
     }
 }
 
 - (void)windowDidBecomeKey:(NSNotification*)notification {
-    if (_sg_on_window_active) {
-        _sg_on_window_active(true);
+    if (_se_on_window_active) {
+        _se_on_window_active(true);
     }
 }
 
 - (void)windowDidResignKey:(NSNotification*)notification {
-    if (_sg_on_window_active) {
-        _sg_on_window_active(false);
+    if (_se_on_window_active) {
+        _se_on_window_active(false);
     }
 }
 
@@ -328,7 +328,7 @@ const void* sg_mtk_get_drawable() {
 #ifdef SOKOL_METAL_MACOS
 - (void)drawInMTKView:(nonnull MTKView*)view {
     @autoreleasepool {
-        _sg_frame_func();
+        _se_frame_func();
     }
 }
 #endif
@@ -373,7 +373,7 @@ const void* sg_mtk_get_drawable() {
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-    if (_sg_on_file_drop) {
+    if (_se_on_file_drop) {
         NSPasteboard *pboard = [sender draggingPasteboard];
         NSArray *filenames = [pboard propertyListForType:NSFilenamesPboardType];
         for (unsigned long i = 0; i < filenames.count; i++) {
@@ -384,7 +384,7 @@ const void* sg_mtk_get_drawable() {
             NSUInteger len = [data length];
             Byte *byteData = (Byte*)malloc(len);
             memcpy(byteData, [data bytes], len);
-            _sg_on_file_drop(utfs, i, filenames.count);
+            _se_on_file_drop(utfs, i, filenames.count);
             free(utfs);
         }
         
@@ -395,8 +395,8 @@ const void* sg_mtk_get_drawable() {
 }
 
 - (void)mouseDown:(NSEvent*)event {
-    if (_sg_mouse_btn_down_func) {
-        _sg_mouse_btn_down_func(0);
+    if (_se_mouse_btn_down_func) {
+        _se_mouse_btn_down_func(0);
     }
 }
 
@@ -405,26 +405,26 @@ const void* sg_mtk_get_drawable() {
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    if (_sg_mouse_btn_up_func) {
-        _sg_mouse_btn_up_func(0);
+    if (_se_mouse_btn_up_func) {
+        _se_mouse_btn_up_func(0);
     }
 }
 
 - (void)mouseMoved:(NSEvent*)event {
-    if (_sg_mouse_pos_func) {
+    if (_se_mouse_pos_func) {
 #ifdef SOKOL_METAL_MACOS
-        const NSRect content_rect = [_sg_mtk_view frame];
+        const NSRect content_rect = [_se_mtk_view frame];
 #else
-        const NSRect content_rect = [_sg_gl_view frame];
+        const NSRect content_rect = [_se_gl_view frame];
 #endif
         const NSPoint pos = [event locationInWindow];
-        _sg_mouse_pos_func(pos.x, content_rect.size.height - pos.y);
+        _se_mouse_pos_func(pos.x, content_rect.size.height - pos.y);
     }
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
-    if (_sg_mouse_btn_down_func) {
-        _sg_mouse_btn_down_func(1);
+    if (_se_mouse_btn_down_func) {
+        _se_mouse_btn_down_func(1);
     }
 }
 
@@ -433,16 +433,16 @@ const void* sg_mtk_get_drawable() {
 }
 
 - (void)rightMouseUp:(NSEvent*)event {
-    if (_sg_mouse_btn_up_func) {
-        _sg_mouse_btn_up_func(1);
+    if (_se_mouse_btn_up_func) {
+        _se_mouse_btn_up_func(1);
     }
 }
 
 - (void)keyDown:(NSEvent*)event {
-    if (_sg_key_down_func) {
-        _sg_key_down_func([event keyCode]);
+    if (_se_key_down_func) {
+        _se_key_down_func([event keyCode]);
     }
-    if (_sg_char_func) {
+    if (_se_char_func) {
         const NSString* characters = [event characters];
         const NSUInteger length = [characters length];
         for (NSUInteger i = 0; i < length; i++) {
@@ -450,25 +450,25 @@ const void* sg_mtk_get_drawable() {
             if ((codepoint & 0xFF00) == 0xF700) {
                 continue;
             }
-            _sg_char_func(codepoint);
+            _se_char_func(codepoint);
         }
     }
 }
 
 - (void)flagsChanged:(NSEvent*)event {
-    if (_sg_key_up_func) {
-        _sg_key_up_func([event keyCode]);
+    if (_se_key_up_func) {
+        _se_key_up_func([event keyCode]);
     }
 }
 
 - (void)keyUp:(NSEvent*)event {
-    if (_sg_key_up_func) {
-        _sg_key_up_func([event keyCode]);
+    if (_se_key_up_func) {
+        _se_key_up_func([event keyCode]);
     }
 }
 
 - (void)scrollWheel:(NSEvent*)event {
-    if (_sg_mouse_wheel_func) {
+    if (_se_mouse_wheel_func) {
         double dy = [event scrollingDeltaY];
         if ([event hasPreciseScrollingDeltas]) {
             dy *= 0.1;
@@ -476,21 +476,21 @@ const void* sg_mtk_get_drawable() {
         else {
             dy = [event deltaY];
         }
-        _sg_mouse_wheel_func(dy);
+        _se_mouse_wheel_func(dy);
     }
 }
 @end
 
 //------------------------------------------------------------------------------
-void sg_start(int w, int h, int smp_count, const char* title, sg_init_func ifun, sg_frame_func ffun, sg_shutdown_func sfun) {
-    _sg_width = w;
-    _sg_height = h;
-    _sg_sample_count = smp_count;
-    _sg_window_title = title;
-    _sg_init_func = ifun;
-    _sg_frame_func = ffun;
-    _sg_shutdown_func = sfun;
-    _sg_desired_frame_time = 1.0f / 60.0f;
+void se_start(int w, int h, int smp_count, const char* title, se_init_func ifun, se_frame_func ffun, se_shutdown_func sfun) {
+    _se_width = w;
+    _se_height = h;
+    _se_sample_count = smp_count;
+    _se_window_title = title;
+    _se_init_func = ifun;
+    _se_frame_func = ffun;
+    _se_shutdown_func = sfun;
+    _se_desired_frame_time = 1.0f / 60.0f;
     [SokolApp sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     id delg = [[SokolAppDelegate alloc] init];
@@ -498,33 +498,33 @@ void sg_start(int w, int h, int smp_count, const char* title, sg_init_func ifun,
     [NSApp activateIgnoringOtherApps:YES];
     [NSApp run];
 }
-void sg_quite() {
+void se_quite() {
     exit(0);
 }
 
-extern void sg_on_window_minimize(sg_window_minimize_func fn) {
-    _sg_on_window_minimize = fn;
+extern void se_on_window_minimize(se_window_minimize_func fn) {
+    _se_on_window_minimize = fn;
 }
-extern void sg_on_window_maximize(sg_window_minimize_func fn) {
-    _sg_on_window_maximize = fn;
+extern void se_on_window_maximize(se_window_minimize_func fn) {
+    _se_on_window_maximize = fn;
 }
-extern void sg_on_window_move(sg_window_move_func fn) {
-    _sg_on_window_move = fn;
+extern void se_on_window_move(se_window_move_func fn) {
+    _se_on_window_move = fn;
 }
-extern void sg_on_window_resize(sg_window_resize_func fn) {
-    _sg_on_window_resize = fn;
+extern void se_on_window_resize(se_window_resize_func fn) {
+    _se_on_window_resize = fn;
 }
-extern void sg_on_window_active(sg_window_active_func fn) {
-    _sg_on_window_active = fn;
+extern void se_on_window_active(se_window_active_func fn) {
+    _se_on_window_active = fn;
 }
 
 
-void _sg_update_window() {
+void _se_update_window() {
 	bool borderless_full = false;
 
-	if (sg_is_window_borderless()) {
-		NSRect frameRect = [_sg_window frame];
-		NSRect screenRect = [[_sg_window screen] frame];
+	if (se_is_window_borderless()) {
+		NSRect frameRect = [_se_window frame];
+		NSRect screenRect = [[_se_window screen] frame];
 
 		// Check if our window covers up the screen
 		if (frameRect.origin.x <= screenRect.origin.x && frameRect.origin.y <= frameRect.origin.y &&
@@ -535,52 +535,52 @@ void _sg_update_window() {
 
 	if (borderless_full) {
 		// If the window covers up the screen set the level to above the main menu and hide on deactivate
-		[_sg_window setLevel:NSMainMenuWindowLevel + 1];
-		[_sg_window setHidesOnDeactivate:YES];
+		[_se_window setLevel:NSMainMenuWindowLevel + 1];
+		[_se_window setHidesOnDeactivate:YES];
 	} else {
 		// Reset these when our window is not a borderless window that covers up the screen
-		[_sg_window setLevel:NSNormalWindowLevel];
-		[_sg_window setHidesOnDeactivate:NO];
+		[_se_window setLevel:NSNormalWindowLevel];
+		[_se_window setHidesOnDeactivate:NO];
 	}
 }
 
 /* screen */
-int _sg_is_hidpi_allowed() {
+int _se_is_hidpi_allowed() {
     return true;
 }
 
-float _sg_display_scale(id screen) {
-	if (_sg_is_hidpi_allowed()) {
+float _se_display_scale(id screen) {
+	if (_se_is_hidpi_allowed()) {
 		if ([screen respondsToSelector:@selector(backingScaleFactor)]) {
 			return fmax(1.0, [screen backingScaleFactor]);
 		}
 	}
 	return 1.0f;
 }
-float _sg_default_display_scale() {
-    if (_sg_window) {
-        return _sg_display_scale([_sg_window screen]);
+float _se_default_display_scale() {
+    if (_se_window) {
+        return _se_display_scale([_se_window screen]);
     } else {
-        return _sg_display_scale([NSScreen mainScreen]);
+        return _se_display_scale([NSScreen mainScreen]);
     }
 }
-void sg_set_window_position(float x, float y) {
+void se_set_window_position(float x, float y) {
     float width, height;
-	sg_get_screen_size(0, &width, &height);
+	se_get_screen_size(0, &width, &height);
 	NSPoint pos;
-	float displayScale = _sg_default_display_scale();
+	float displayScale = _se_default_display_scale();
 
 	pos.x = x / displayScale;
 	// For OS X the y starts at the bottom
 	pos.y = (height - y) / displayScale;
 
-	[_sg_window setFrameTopLeftPoint:pos];
+	[_se_window setFrameTopLeftPoint:pos];
 
-	_sg_update_window();
+	_se_update_window();
 }
-void sg_set_window_size(float width, float height) {
+void se_set_window_size(float width, float height) {
 
-	if (sg_is_window_borderless() == false) {
+	if (se_is_window_borderless() == false) {
 		// NSRect used by setFrame includes the title bar, so add it to our size.y
 		CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
 		if (menuBarHeight != 0.f) {
@@ -592,36 +592,36 @@ void sg_set_window_size(float width, float height) {
 		}
 	}
 
-	NSRect frame = [_sg_window frame];
-	[_sg_window setFrame:NSMakeRect(frame.origin.x, frame.origin.y, width, height) display:YES];
+	NSRect frame = [_se_window frame];
+	[_se_window setFrame:NSMakeRect(frame.origin.x, frame.origin.y, width, height) display:YES];
 
-	_sg_update_window();
+	_se_update_window();
 };
 
-int _sg_get_screen_index(NSScreen *screen) {
+int _se_get_screen_index(NSScreen *screen) {
     const NSUInteger index = [[NSScreen screens] indexOfObject:screen];
     return index == NSNotFound ? 0 : index;
 }
-int sg_get_screen_count() {
+int se_get_screen_count() {
 	NSArray *screenArray = [NSScreen screens];
 	return [screenArray count];
 }
-int sg_get_current_screen() {
-	if (_sg_window) {
-		return _sg_get_screen_index([_sg_window screen]);
+int se_get_current_screen() {
+	if (_se_window) {
+		return _se_get_screen_index([_se_window screen]);
 	} else {
-		return _sg_get_screen_index([NSScreen mainScreen]);
+		return _se_get_screen_index([NSScreen mainScreen]);
 	}
 }
-bool sg_get_screen_position(int screenId, float *x, float *y) {
+bool se_get_screen_position(int screenId, float *x, float *y) {
 	if (screenId < 0) {
-		screenId = sg_get_current_screen();
+		screenId = se_get_current_screen();
 	}
 
 	NSArray *screenArray = [NSScreen screens];
     NSUInteger _screenId = (NSUInteger) screenId;
 	if (_screenId < [screenArray count]) {
-		float displayScale = _sg_display_scale([screenArray objectAtIndex:_screenId]);
+		float displayScale = _se_display_scale([screenArray objectAtIndex:_screenId]);
 		NSRect nsrect = [[screenArray objectAtIndex:screenId] frame];
         *x = (float) nsrect.origin.x * displayScale;
         *y = (float) nsrect.origin.y * displayScale;
@@ -629,25 +629,25 @@ bool sg_get_screen_position(int screenId, float *x, float *y) {
 	}
     return false;
 }
-float sg_get_screen_x(int screenId) {
+float se_get_screen_x(int screenId) {
     float x, y;
-    sg_get_screen_position(screenId, &x, &y);
+    se_get_screen_position(screenId, &x, &y);
     return x;
 }
-float sg_get_screen_y(int screenId) {
+float se_get_screen_y(int screenId) {
     float x, y;
-    sg_get_screen_position(screenId, &x, &y);
+    se_get_screen_position(screenId, &x, &y);
     return y;
 }
-bool sg_get_screen_size(int screenId, float *width, float *height) {
+bool se_get_screen_size(int screenId, float *width, float *height) {
 	if (screenId < 0) {
-		screenId = sg_get_current_screen();
+		screenId = se_get_current_screen();
 	}
 
 	NSArray *screenArray = [NSScreen screens];
     NSUInteger _screenId = (NSUInteger) screenId;
 	if (_screenId < [screenArray count]) {
-		float displayScale = _sg_display_scale([screenArray objectAtIndex:_screenId]);
+		float displayScale = _se_display_scale([screenArray objectAtIndex:_screenId]);
 		// Note: Use frame to get the whole screen size
 		NSRect nsrect = [[screenArray objectAtIndex:screenId] frame];
         *width = nsrect.origin.x * displayScale;
@@ -656,25 +656,25 @@ bool sg_get_screen_size(int screenId, float *width, float *height) {
 	}
 	return false;
 }
-float sg_get_screen_width(int screenId) {
+float se_get_screen_width(int screenId) {
     float width, height;
-    sg_get_screen_size(screenId, &width, &height);
+    se_get_screen_size(screenId, &width, &height);
     return width;
 }
-float sg_get_screen_height(int screenId) {
+float se_get_screen_height(int screenId) {
     float width, height;
-    sg_get_screen_size(screenId, &width, &height);
+    se_get_screen_size(screenId, &width, &height);
     return height;
 }
-float sg_get_screen_dpi(int screenId) {
+float se_get_screen_dpi(int screenId) {
 	if (screenId < 0) {
-		screenId = sg_get_current_screen();
+		screenId = se_get_current_screen();
 	}
     NSUInteger _screenId = (NSUInteger) screenId;
 
 	NSArray *screenArray = [NSScreen screens];
 	if (_screenId < [screenArray count]) {
-		float displayScale = _sg_display_scale([screenArray objectAtIndex:_screenId]);
+		float displayScale = _se_display_scale([screenArray objectAtIndex:_screenId]);
 		NSDictionary *description = [[screenArray objectAtIndex:_screenId] deviceDescription];
 		NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
         CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
@@ -685,176 +685,176 @@ float sg_get_screen_dpi(int screenId) {
 	return 72.0f;
 }
 
-bool sg_can_control_window() {
+bool se_can_control_window() {
     return true;
 }
-bool sg_can_go_fullscreen() {
+bool se_can_go_fullscreen() {
     return true;
 }
 
-void sg_set_window_fullscreen(bool enable) {
-	if (_sg_is_window_fullscreen != enable) {
+void se_set_window_fullscreen(bool enable) {
+	if (_se_is_window_fullscreen != enable) {
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
-		[_sg_window toggleFullScreen:nil];
+		[_se_window toggleFullScreen:nil];
 #else
-		[_sg_window performZoom:nil];
+		[_se_window performZoom:nil];
 #endif /*MAC_OS_X_VERSION_MAX_ALLOWED*/
 	}
-	_sg_is_window_fullscreen = enable;
+	_se_is_window_fullscreen = enable;
 }
-bool sg_is_window_fullscreen() {
-    return [_sg_window isZoomed];
+bool se_is_window_fullscreen() {
+    return [_se_window isZoomed];
 }
-void sg_set_window_borderless(bool borderless) {
+void se_set_window_borderless(bool borderless) {
 
 	// OrderOut prevents a lose focus bug with the window
-	[_sg_window orderOut:nil];
+	[_se_window orderOut:nil];
 
 	if (borderless) {
-		[_sg_window setStyleMask:NSWindowStyleMaskBorderless];
+		[_se_window setStyleMask:NSWindowStyleMaskBorderless];
 	} else {
-		[_sg_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask];
+		[_se_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask];
 
 		// Force update of the window styles
-		NSRect frameRect = [_sg_window frame];
-		[_sg_window setFrame:NSMakeRect(frameRect.origin.x, frameRect.origin.y, frameRect.size.width + 1, frameRect.size.height) display:NO];
-		[_sg_window setFrame:frameRect display:NO];
+		NSRect frameRect = [_se_window frame];
+		[_se_window setFrame:NSMakeRect(frameRect.origin.x, frameRect.origin.y, frameRect.size.width + 1, frameRect.size.height) display:NO];
+		[_se_window setFrame:frameRect display:NO];
 
 		// Restore the window title
-        [_sg_window setTitle:[NSString stringWithUTF8String:_sg_window_title]];
+        [_se_window setTitle:[NSString stringWithUTF8String:_se_window_title]];
 	}
 
-	_sg_update_window();
+	_se_update_window();
 
-	[_sg_window makeKeyAndOrderFront:nil];
+	[_se_window makeKeyAndOrderFront:nil];
 }
 
-bool sg_is_window_borderless() {
-    return [_sg_window styleMask] == NSWindowStyleMaskBorderless;
+bool se_is_window_borderless() {
+    return [_se_window styleMask] == NSWindowStyleMaskBorderless;
 }
-void sg_set_window_minimized(bool enabled) {
+void se_set_window_minimized(bool enabled) {
 	if (enabled) {
-		[_sg_window performMiniaturize:nil];
+		[_se_window performMiniaturize:nil];
     } else {
-		[_sg_window deminiaturize:nil];
+		[_se_window deminiaturize:nil];
     }
 }
 
-bool sg_is_window_minimized() {
-	if ([_sg_window respondsToSelector:@selector(isMiniaturized)]) {
-        return [_sg_window isMiniaturized];
+bool se_is_window_minimized() {
+	if ([_se_window respondsToSelector:@selector(isMiniaturized)]) {
+        return [_se_window isMiniaturized];
     }
 
-	return _sg_window_minimized;
+	return _se_window_minimized;
 }
 
-void sg_set_window_maximized(bool enabled) {
+void se_set_window_maximized(bool enabled) {
 	if (enabled) {
-        _sg_restore_rect_x = sg_get_window_x();
-        _sg_restore_rect_y = sg_get_window_x();
-        _sg_restore_rect_width = sg_get_window_width();
-        _sg_restore_rect_height = sg_get_window_height();
-		[_sg_window setFrame:[[[NSScreen screens] objectAtIndex:sg_get_current_screen()] visibleFrame] display:YES];
+        _se_restore_rect_x = se_get_window_x();
+        _se_restore_rect_y = se_get_window_x();
+        _se_restore_rect_width = se_get_window_width();
+        _se_restore_rect_height = se_get_window_height();
+		[_se_window setFrame:[[[NSScreen screens] objectAtIndex:se_get_current_screen()] visibleFrame] display:YES];
 	} else {
-		sg_set_window_size(_sg_restore_rect_x, _sg_restore_rect_y);
-		sg_set_window_position(_sg_restore_rect_width, _sg_restore_rect_height);
+		se_set_window_size(_se_restore_rect_x, _se_restore_rect_y);
+		se_set_window_position(_se_restore_rect_width, _se_restore_rect_height);
 	};
-	_sg_window_maximized = enabled;
+	_se_window_maximized = enabled;
 }
 
-bool sg_is_window_maximized() {
+bool se_is_window_maximized() {
 	// don't know
-	return _sg_window_maximized;
+	return _se_window_maximized;
 }
-void sg_set_window_resizable(bool enabled) {
+void se_set_window_resizable(bool enabled) {
 	if (enabled) {
-		[_sg_window setStyleMask:[_sg_window styleMask] | NSResizableWindowMask];
+		[_se_window setStyleMask:[_se_window styleMask] | NSResizableWindowMask];
     } else {
-		[_sg_window setStyleMask:[_sg_window styleMask] & ~NSResizableWindowMask];
+		[_se_window setStyleMask:[_se_window styleMask] & ~NSResizableWindowMask];
     }
 }
-bool sg_is_window_resizable() {
-	return [_sg_window styleMask] & NSResizableWindowMask;
+bool se_is_window_resizable() {
+	return [_se_window styleMask] & NSResizableWindowMask;
 }
 void move_window_to_foreground() {
-    [_sg_window orderFrontRegardless];
+    [_se_window orderFrontRegardless];
 }
-bool sg_get_window_position(float *x, float *y) {
-	*x = [_sg_window frame].origin.x * _sg_default_display_scale();
-    *y = [_sg_window frame].origin.y * _sg_default_display_scale();
+bool se_get_window_position(float *x, float *y) {
+	*x = [_se_window frame].origin.x * _se_default_display_scale();
+    *y = [_se_window frame].origin.y * _se_default_display_scale();
     return true;
 };
-float sg_get_window_x() {
-	return [_sg_window frame].origin.x * _sg_default_display_scale();
+float se_get_window_x() {
+	return [_se_window frame].origin.x * _se_default_display_scale();
 };
-float sg_get_window_y() {
-	return [_sg_window frame].origin.y * _sg_default_display_scale();
+float se_get_window_y() {
+	return [_se_window frame].origin.y * _se_default_display_scale();
 };
 
 /* return current MTKView drawable width */
-bool sg_get_window_size(int *width, int *height) {
+bool se_get_window_size(int *width, int *height) {
 #ifdef SOKOL_METAL_MACOS
-    *width = (int) [_sg_mtk_view drawableSize].width;
-    *height = (int) [_sg_mtk_view drawableSize].height;
+    *width = (int) [_se_mtk_view drawableSize].width;
+    *height = (int) [_se_mtk_view drawableSize].height;
 #else
-    NSSize size = _sg_gl_view.frame.size;
+    NSSize size = _se_gl_view.frame.size;
     *width = (int) size.width;
     *height = (int) size.height;
 #endif
     return true;
 }
 
-void sg_request_attention() {
+void se_request_attention() {
     [NSApp requestUserAttention:NSCriticalRequest];
 }
 
-float _sg_get_time() {
+float _se_get_time() {
     return (float) CACurrentMediaTime();
 }
 
 /* return current MTKView drawable width */
-int sg_get_window_width() {
+int se_get_window_width() {
     int width, height;
-    sg_get_window_size(&width, &height);
+    se_get_window_size(&width, &height);
     return width;
 }
 
 /* return current MTKView drawable height */
-int sg_get_window_height() {
+int se_get_window_height() {
     int width, height;
-    sg_get_window_size(&width, &height);
+    se_get_window_size(&width, &height);
     return height;
 }
 
 /* misc */
-void sg_on_file_drop(sg_file_drop_func fn) {
-    _sg_on_file_drop = fn;
+void se_on_file_drop(se_file_drop_func fn) {
+    _se_on_file_drop = fn;
 }
 
 /* register input callbacks */
-void sg_on_key_down(sg_key_func fn) {
-    _sg_key_down_func = fn;
+void se_on_key_down(se_key_func fn) {
+    _se_key_down_func = fn;
 }
-void sg_on_key_up(sg_key_func fn) {
-    _sg_key_up_func = fn;
+void se_on_key_up(se_key_func fn) {
+    _se_key_up_func = fn;
 }
-void sg_on_char(sg_char_func fn) {
-    _sg_char_func = fn;
+void se_on_char(se_char_func fn) {
+    _se_char_func = fn;
 }
-void sg_on_mouse_btn_down(sg_mouse_btn_func fn) {
-    _sg_mouse_btn_down_func = fn;
+void se_on_mouse_btn_down(se_mouse_btn_func fn) {
+    _se_mouse_btn_down_func = fn;
 }
-void sg_on_mouse_btn_up(sg_mouse_btn_func fn) {
-    _sg_mouse_btn_up_func = fn;
+void se_on_mouse_btn_up(se_mouse_btn_func fn) {
+    _se_mouse_btn_up_func = fn;
 }
-void sg_on_mouse_pos(sg_mouse_pos_func fn) {
-    _sg_mouse_pos_func = fn;
+void se_on_mouse_pos(se_mouse_pos_func fn) {
+    _se_mouse_pos_func = fn;
 }
-void sg_on_mouse_wheel(sg_mouse_wheel_func fn) {
-    _sg_mouse_wheel_func = fn;
+void se_on_mouse_wheel(se_mouse_wheel_func fn) {
+    _se_mouse_wheel_func = fn;
 }
 
-void sg_set_mouse_locked(bool locked) {
+void se_set_mouse_locked(bool locked) {
     // Apple Docs state that the display parameter is not used.
     // "This parameter is not used. By default, you may pass kCGDirectMainDisplay."
     // https://developer.apple.com/library/mac/documentation/graphicsimaging/reference/Quartz_Services_Ref/Reference/reference.html
@@ -865,12 +865,12 @@ void sg_set_mouse_locked(bool locked) {
         CGDisplayShowCursor(kCGDirectMainDisplay);
         CGAssociateMouseAndMouseCursorPosition(true);
     }
-    _sg_mouse_locked = locked;
+    _se_mouse_locked = locked;
 }
-bool sg_is_mouse_locked() {
-    return _sg_mouse_locked;
+bool se_is_mouse_locked() {
+    return _se_mouse_locked;
 }
-void sg_set_mouse_hidden(bool hidden) {
+void se_set_mouse_hidden(bool hidden) {
     if (hidden) {
         CGDisplayHideCursor(kCGDirectMainDisplay);
         CGAssociateMouseAndMouseCursorPosition(true);
@@ -882,45 +882,45 @@ void sg_set_mouse_hidden(bool hidden) {
 
 /* touch */
 
-void sg_on_touch_begin(touch_event_func fn) {
+void se_on_touch_begin(touch_event_func fn) {
 }
-void sg_on_touch_move(touch_event_func fn) {
+void se_on_touch_move(touch_event_func fn) {
 }
-void sg_on_touch_cancel(touch_event_func fn) {
+void se_on_touch_cancel(touch_event_func fn) {
 }
-void sg_on_touch_end(touch_event_func fn) {
+void se_on_touch_end(touch_event_func fn) {
 }
 
 /* open file for reading */
-void* sg_open_read_file(const char* path) {
+void* se_open_read_file(const char* path) {
 
 }
 /* open file for writing */
-void* sg_open_write_file(const char* path) {
+void* se_open_write_file(const char* path) {
 
 }
 /* write to file, return number of bytes actually written */
-void* sg_write_file(void* f, const void* ptr, int numBytes) {
+void* se_write_file(void* f, const void* ptr, int numBytes) {
 
 }
 /* read from file, return number of bytes actually read */
-int sg_read_file(void* f, void* ptr, int numBytes) {
+int se_read_file(void* f, void* ptr, int numBytes) {
 
 }
 /* seek from start of file */
-bool sg_seek_file(void* f, int offset) {
+bool se_seek_file(void* f, int offset) {
 
 }
 /* get file size */
-extern int sg_get_file_size(void* f) {
+extern int se_get_file_size(void* f) {
 
 }
 /* close file */
-void sg_close_file(void* f) {
+void se_close_file(void* f) {
 
 }
 /* get the executeable path */
-void sg_get_executable_dir(char* nameBuffer, int strLength) {
+void se_get_executable_dir(char* nameBuffer, int strLength) {
 
 }
 
