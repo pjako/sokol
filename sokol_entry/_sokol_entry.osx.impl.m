@@ -482,15 +482,15 @@ const void* se_mtk_get_drawable() {
 @end
 
 //------------------------------------------------------------------------------
-void se_start(int w, int h, int smp_count, const char* title, se_init_func ifun, se_frame_func ffun, se_shutdown_func sfun) {
-    _se_width = w;
-    _se_height = h;
-    _se_sample_count = smp_count;
-    _se_window_title = title;
-    _se_init_func = ifun;
-    _se_frame_func = ffun;
-    _se_shutdown_func = sfun;
-    _se_desired_frame_time = 1.0f / 60.0f;
+void se_start(const se_start_parameter* params) {
+    _se_width = params->width > 0 ? params->width : 400;
+    _se_height = params->height > 0 ? params->height : 400;
+    _se_sample_count = params->samples > 0 ? params->samples : 1;
+    _se_window_title = params->title != NULL ? params->title : "SE_OSX";
+    _se_init_func = params->init;
+    _se_frame_func = params->frame;
+    _se_shutdown_func = params->exit;
+    _se_desired_frame_time = params->desired_frame_rate > 0 ? params->desired_frame_rate : (1.0f / 60.0f);
     [SokolApp sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     id delg = [[SokolAppDelegate alloc] init];

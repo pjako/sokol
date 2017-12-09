@@ -32,6 +32,7 @@ typedef struct {
     int mtl_sampler_cache_size;
 } se_gfx_init_data;
 
+
 // lifetime functionality
 extern void se_main();
 extern void se_quite();
@@ -39,7 +40,19 @@ typedef void(*se_init_func)(const se_gfx_init_data*);
 typedef void(*se_frame_func)();
 typedef void(*se_shutdown_func)();
 
-extern void se_start(int width, int height, int samples, const char* title, se_init_func, se_frame_func, se_shutdown_func);
+
+typedef struct {
+    int width;
+    int height;
+    char* title;
+    int samples;
+    se_init_func init;
+    se_frame_func frame;
+    se_shutdown_func exit;
+    float desired_frame_rate;
+} se_start_parameter;
+
+extern void se_start(const se_start_parameter*);
 
 // screen
 extern int se_get_screen_count();
