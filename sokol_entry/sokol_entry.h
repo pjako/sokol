@@ -158,6 +158,12 @@ extern void se_on_touch_move(touch_event_func);
 extern void se_on_touch_cancel(touch_event_func);
 extern void se_on_touch_end(touch_event_func);
 
+
+const char* se_get_config_path();
+const char* se_get_data_path();
+const char* se_get_cache_path();
+const char* se_get_executeable_path();
+
 /* open file for reading */
 extern void* se_open_read_file(const char* path);
 /* open file for writing */

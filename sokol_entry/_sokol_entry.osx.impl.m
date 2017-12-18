@@ -3,6 +3,50 @@
 #import <MetalKit/MetalKit.h>
 #import <QuartzCore/QuartzCore.h>
 #include "sokol_entry.h"
+#include <libproc.h>
+
+#ifndef MAC_OS_X_VERSION_10_9
+#define MAC_OS_X_VERSION_10_9 1090
+#endif
+#ifndef MAC_OS_X_VERSION_10_12
+#define MAC_OS_X_VERSION_10_12 101200
+#endif
+
+#if !defined (NS_IMPL_COCOA) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
+#define NSEventModifierFlagCommand         NSCommandKeyMask
+#define NSEventModifierFlagControl         NSControlKeyMask
+#define NSEventModifierFlagHelp            NSHelpKeyMask
+#define NSEventModifierFlagNumericPad      NSNumericPadKeyMask
+#define NSEventModifierFlagOption          NSAlternateKeyMask
+#define NSEventModifierFlagShift           NSShiftKeyMask
+#define NSCompositingOperationSourceOver   NSCompositeSourceOver
+#define NSEventMaskApplicationDefined      NSApplicationDefinedMask
+#define NSEventTypeApplicationDefined      NSApplicationDefined
+#define NSEventTypeCursorUpdate            NSCursorUpdate
+#define NSEventTypeMouseMoved              NSMouseMoved
+#define NSEventTypeLeftMouseDown           NSLeftMouseDown
+#define NSEventTypeRightMouseDown          NSRightMouseDown
+#define NSEventTypeOtherMouseDown          NSOtherMouseDown
+#define NSEventTypeLeftMouseUp             NSLeftMouseUp
+#define NSEventTypeRightMouseUp            NSRightMouseUp
+#define NSEventTypeOtherMouseUp            NSOtherMouseUp
+#define NSEventTypeLeftMouseDragged        NSLeftMouseDragged
+#define NSEventTypeRightMouseDragged       NSRightMouseDragged
+#define NSEventTypeOtherMouseDragged       NSOtherMouseDragged
+#define NSEventTypeScrollWheel             NSScrollWheel
+#define NSEventTypeKeyDown                 NSKeyDown
+#define NSEventTypeKeyUp                   NSKeyUp
+#define NSEventTypeFlagsChanged            NSFlagsChanged
+#define NSEventMaskAny                     NSAnyEventMask
+#define NSWindowStyleMaskBorderless        NSBorderlessWindowMask
+#define NSWindowStyleMaskClosable          NSClosableWindowMask
+#define NSWindowStyleMaskFullScreen        NSFullScreenWindowMask
+#define NSWindowStyleMaskMiniaturizable    NSMiniaturizableWindowMask
+#define NSWindowStyleMaskResizable         NSResizableWindowMask
+#define NSWindowStyleMaskTitled            NSTitledWindowMask
+#define NSAlertStyleCritical               NSCriticalAlertStyle
+#define NSControlSizeRegular               NSRegularControlSize
+#endif
 
 @interface SokolApp : NSApplication
 @end
@@ -922,6 +966,66 @@ void se_close_file(void* f) {
 /* get the executeable path */
 void se_get_executable_dir(char* nameBuffer, int strLength) {
 
+}
+
+const char* _se_get_environment(const char* env) {
+    const char* envStr = getenv(env);
+    return envStr ? envStr : "";
+}
+bool _se_has_environment(const char* env) {
+    const char* envStr = getenv(env);
+    return envStr ? true : false;
+}
+const char* se_get_config_path() {
+    static char* _se_home_path;
+    if (_se_has_environment("XDG_CONFIG_HOME")) {
+        return _se_get_environment("XDG_CONFIG_HOME");
+    } else if (_se_has_environment("HOME")) {
+        if (!_se_home_path) {
+            const char* home = _se_get_environment("HOME");
+            const char* end = "/Library/Application Support";
+            _se_home_path = calloc(strlen(home) + strlen(end) + 1, 1);
+            strcat(_se_home_path, home);
+            strcat(_se_home_path, end);
+        }
+        return _se_home_path;
+    } else {
+        return ".";
+    }
+}
+
+const char* se_get_data_path() {
+    return _se_has_environment("XDG_DATA_HOME") ? _se_get_environment("XDG_DATA_HOME") : _se_get_environment("");
+}
+
+
+const char* se_get_cache_path() {
+    static char* _se_cache_path;
+    if (_se_has_environment("XDG_CACHE_HOME")) {
+        return _se_get_environment("XDG_CACHE_HOME");
+    } else if (_se_has_environment("HOME")) {
+        if (!_se_cache_path) {
+            const char* cache = _se_get_environment("HOME");
+            const char* end = "/Library/Caches";
+            _se_cache_path = calloc(strlen(cache) + strlen(end) + 1, 1);
+            strcat(_se_cache_path, cache);
+            strcat(_se_cache_path, end);
+        }
+        return _se_cache_path;
+    } else {
+        return se_get_config_path();
+    }
+}
+const char* se_get_executeable_path() {
+    static char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
+    int ret;
+    pid_t pid;
+    pid = getpid();
+    ret = proc_pidpath(pid, pathbuf, sizeof(pathbuf));
+    if (ret <= 0) {
+        return "";
+    }
+    return pathbuf;
 }
 
 
