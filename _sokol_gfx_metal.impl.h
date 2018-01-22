@@ -18,12 +18,11 @@ extern "C" {
 #endif
     
 enum {
-    _SG_MTL_NUM_INFLIGHT_FRAMES = 2,
     _SG_MTL_DEFAULT_UB_SIZE = 4 * 1024 * 1024,
     #if defined(SOKOL_METAL_MACOS)
     _SG_MTL_UB_ALIGN = 256,
     #else
-    _SG_MTL_UB_ALIGN = 16
+    _SG_MTL_UB_ALIGN = 16,
     #endif
     _SG_MTL_DEFAULT_SAMPLER_CACHE_CAPACITY = 64,
     _SG_MTL_INVALID_POOL_INDEX = 0xFFFFFFFF
@@ -35,7 +34,7 @@ _SOKOL_PRIVATE MTLLoadAction _sg_mtl_load_action(sg_action a) {
         case SG_ACTION_CLEAR:       return MTLLoadActionClear;
         case SG_ACTION_LOAD:        return MTLLoadActionLoad;
         case SG_ACTION_DONTCARE:    return MTLLoadActionDontCare;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLLoadAction)0;
     }
 }
 
@@ -60,7 +59,7 @@ _SOKOL_PRIVATE MTLVertexStepFunction _sg_mtl_step_function(sg_vertex_step step) 
     switch (step) {
         case SG_VERTEXSTEP_PER_VERTEX:      return MTLVertexStepFunctionPerVertex;
         case SG_VERTEXSTEP_PER_INSTANCE:    return MTLVertexStepFunctionPerInstance;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLVertexStepFunction)0;
     }
 }
 
@@ -79,23 +78,7 @@ _SOKOL_PRIVATE MTLVertexFormat _sg_mtl_vertex_format(sg_vertex_format fmt) {
         case SG_VERTEXFORMAT_SHORT4:    return MTLVertexFormatShort4;
         case SG_VERTEXFORMAT_SHORT4N:   return MTLVertexFormatShort4Normalized;
         case SG_VERTEXFORMAT_UINT10_N2: return MTLVertexFormatUInt1010102Normalized;
-        default: SOKOL_UNREACHABLE; return 0;
-    }
-}
-
-_SOKOL_PRIVATE MTLPrimitiveTopologyClass _sg_mtl_primitive_topology_class(sg_primitive_type t) {
-    switch (t) {
-        case SG_PRIMITIVETYPE_POINTS:
-            return MTLPrimitiveTopologyClassPoint;
-        case SG_PRIMITIVETYPE_LINES:
-        case SG_PRIMITIVETYPE_LINE_STRIP:
-            return MTLPrimitiveTopologyClassLine;
-        case SG_PRIMITIVETYPE_TRIANGLES:
-        case SG_PRIMITIVETYPE_TRIANGLE_STRIP:
-            return MTLPrimitiveTopologyClassTriangle;
-        default:
-            SOKOL_UNREACHABLE;
-            return 0;
+        default: SOKOL_UNREACHABLE; return (MTLVertexFormat)0;
     }
 }
 
@@ -106,7 +89,7 @@ _SOKOL_PRIVATE MTLPrimitiveType _sg_mtl_primitive_type(sg_primitive_type t) {
         case SG_PRIMITIVETYPE_LINE_STRIP:       return MTLPrimitiveTypeLineStrip;
         case SG_PRIMITIVETYPE_TRIANGLES:        return MTLPrimitiveTypeTriangle;
         case SG_PRIMITIVETYPE_TRIANGLE_STRIP:   return MTLPrimitiveTypeTriangleStrip;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLPrimitiveType)0;
     }
 }
 
@@ -188,7 +171,7 @@ _SOKOL_PRIVATE MTLBlendOperation _sg_mtl_blend_op(sg_blend_op op) {
         case SG_BLENDOP_ADD:                return MTLBlendOperationAdd;
         case SG_BLENDOP_SUBTRACT:           return MTLBlendOperationSubtract;
         case SG_BLENDOP_REVERSE_SUBTRACT:   return MTLBlendOperationReverseSubtract;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLBlendOperation)0;
     }
 }
 
@@ -209,7 +192,7 @@ _SOKOL_PRIVATE MTLBlendFactor _sg_mtl_blend_factor(sg_blend_factor f) {
         case SG_BLENDFACTOR_ONE_MINUS_BLEND_COLOR:  return MTLBlendFactorOneMinusBlendColor;
         case SG_BLENDFACTOR_BLEND_ALPHA:            return MTLBlendFactorBlendAlpha;
         case SG_BLENDFACTOR_ONE_MINUS_BLEND_ALPHA:  return MTLBlendFactorOneMinusBlendAlpha;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLBlendFactor)0;
     }
 }
 
@@ -223,7 +206,7 @@ _SOKOL_PRIVATE MTLCompareFunction _sg_mtl_compare_func(sg_compare_func f) {
         case SG_COMPAREFUNC_NOT_EQUAL:      return MTLCompareFunctionNotEqual;
         case SG_COMPAREFUNC_GREATER_EQUAL:  return MTLCompareFunctionGreaterEqual;
         case SG_COMPAREFUNC_ALWAYS:         return MTLCompareFunctionAlways;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLCompareFunction)0;
     }
 }
 
@@ -237,7 +220,7 @@ _SOKOL_PRIVATE MTLStencilOperation _sg_mtl_stencil_op(sg_stencil_op op) {
         case SG_STENCILOP_INVERT:       return MTLStencilOperationInvert;
         case SG_STENCILOP_INCR_WRAP:    return MTLStencilOperationIncrementWrap;
         case SG_STENCILOP_DECR_WRAP:    return MTLStencilOperationDecrementWrap;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLStencilOperation)0;
     }
 }
 
@@ -246,7 +229,7 @@ _SOKOL_PRIVATE MTLCullMode _sg_mtl_cull_mode(sg_cull_mode m) {
         case SG_CULLMODE_NONE:  return MTLCullModeNone;
         case SG_CULLMODE_FRONT: return MTLCullModeFront;
         case SG_CULLMODE_BACK:  return MTLCullModeBack;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLCullMode)0;
     }
 }
 
@@ -254,7 +237,7 @@ _SOKOL_PRIVATE MTLWinding _sg_mtl_winding(sg_face_winding w) {
     switch (w) {
         case SG_FACEWINDING_CW:     return MTLWindingClockwise;
         case SG_FACEWINDING_CCW:    return MTLWindingCounterClockwise;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLWinding)0;
     }
 }
 
@@ -262,7 +245,7 @@ _SOKOL_PRIVATE MTLIndexType _sg_mtl_index_type(sg_index_type t) {
     switch (t) {
         case SG_INDEXTYPE_UINT16:   return MTLIndexTypeUInt16;
         case SG_INDEXTYPE_UINT32:   return MTLIndexTypeUInt32;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLIndexType)0;
     }
 }
 
@@ -281,7 +264,7 @@ _SOKOL_PRIVATE MTLTextureType _sg_mtl_texture_type(sg_image_type t) {
         case SG_IMAGETYPE_CUBE:     return MTLTextureTypeCube;
         case SG_IMAGETYPE_3D:       return MTLTextureType3D;
         case SG_IMAGETYPE_ARRAY:    return MTLTextureType2DArray;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLTextureType)0;
     }
 }
 
@@ -302,7 +285,7 @@ _SOKOL_PRIVATE MTLSamplerAddressMode _sg_mtl_address_mode(sg_wrap w) {
         case SG_WRAP_REPEAT:            return MTLSamplerAddressModeRepeat;
         case SG_WRAP_CLAMP_TO_EDGE:     return MTLSamplerAddressModeClampToEdge;
         case SG_WRAP_MIRRORED_REPEAT:   return MTLSamplerAddressModeMirrorRepeat;
-        default: SOKOL_UNREACHABLE; return 0;
+        default: SOKOL_UNREACHABLE; return (MTLSamplerAddressMode)0;
     }
 }
 
@@ -317,7 +300,7 @@ _SOKOL_PRIVATE MTLSamplerMinMagFilter _sg_mtl_minmag_filter(sg_filter f) {
         case SG_FILTER_LINEAR_MIPMAP_LINEAR:
             return MTLSamplerMinMagFilterLinear;
         default:
-            SOKOL_UNREACHABLE; return 0;
+            SOKOL_UNREACHABLE; return (MTLSamplerMinMagFilter)0;
     }
 }
 
@@ -333,7 +316,7 @@ _SOKOL_PRIVATE MTLSamplerMipFilter _sg_mtl_mip_filter(sg_filter f) {
         case SG_FILTER_LINEAR_MIPMAP_LINEAR:
             return MTLSamplerMipFilterLinear;
         default:
-            SOKOL_UNREACHABLE; return 0;
+            SOKOL_UNREACHABLE; return (MTLSamplerMipFilter)0;
     }
 }
 
@@ -345,7 +328,7 @@ static uint32_t* _sg_mtl_free_queue;
 static uint32_t _sg_mtl_release_queue_front;
 static uint32_t _sg_mtl_release_queue_back;
 typedef struct {
-    uint32_t frame_index;
+    uint32_t frame_index;   /* frame index at which it is safe to release this resource */
     uint32_t pool_index;
 } _sg_mtl_release_item;
 static _sg_mtl_release_item* _sg_mtl_release_queue;
@@ -365,7 +348,7 @@ _SOKOL_PRIVATE void _sg_mtl_init_pool(const sg_desc* desc) {
     SOKOL_ASSERT([_sg_mtl_pool count] == _sg_mtl_pool_size);
     /* a queue of currently free slot indices */
     _sg_mtl_free_queue_top = 0;
-    _sg_mtl_free_queue = SOKOL_MALLOC(_sg_mtl_pool_size * sizeof(int));
+    _sg_mtl_free_queue = (uint32_t*)SOKOL_MALLOC(_sg_mtl_pool_size * sizeof(uint32_t));
     for (int i = _sg_mtl_pool_size-1; i >= 0; i--) {
         _sg_mtl_free_queue[_sg_mtl_free_queue_top++] = (uint32_t)i;
     }
@@ -375,7 +358,7 @@ _SOKOL_PRIVATE void _sg_mtl_init_pool(const sg_desc* desc) {
     */
     _sg_mtl_release_queue_front = 0;
     _sg_mtl_release_queue_back = 0;
-    _sg_mtl_release_queue = SOKOL_MALLOC(_sg_mtl_pool_size * sizeof(_sg_mtl_release_item));
+    _sg_mtl_release_queue = (_sg_mtl_release_item*)SOKOL_MALLOC(_sg_mtl_pool_size * sizeof(_sg_mtl_release_item));
     for (uint32_t i = 0; i < _sg_mtl_pool_size; i++) {
         _sg_mtl_release_queue[i].frame_index = 0;
         _sg_mtl_release_queue[i].pool_index = _SG_MTL_INVALID_POOL_INDEX;
@@ -388,16 +371,28 @@ _SOKOL_PRIVATE void _sg_mtl_destroy_pool() {
     _sg_mtl_pool = nil;
 }
 
+/* get a new free resource pool slot */
+_SOKOL_PRIVATE uint32_t _sg_mtl_alloc_pool_slot() {
+    SOKOL_ASSERT(_sg_mtl_free_queue_top > 0);
+    const uint32_t pool_index = _sg_mtl_free_queue[--_sg_mtl_free_queue_top];
+    return pool_index;
+}
+
+/* put a free resource pool slot back into the free-queue */
+_SOKOL_PRIVATE void _sg_mtl_free_pool_slot(uint32_t pool_index) {
+    SOKOL_ASSERT(_sg_mtl_free_queue_top < _sg_mtl_pool_size);
+    _sg_mtl_free_queue[_sg_mtl_free_queue_top++] = pool_index;
+}
+
 /*  add an MTLResource to the pool, return pool index or 0xFFFFFFFF if input was 'nil' */
 _SOKOL_PRIVATE uint32_t _sg_mtl_add_resource(id res) {
     if (nil == res) {
         return _SG_MTL_INVALID_POOL_INDEX;
     }
-    SOKOL_ASSERT(_sg_mtl_free_queue_top > 0);
-    const uint32_t slot_index = _sg_mtl_free_queue[--_sg_mtl_free_queue_top];
-    SOKOL_ASSERT([NSNull null] == _sg_mtl_pool[slot_index]);
-    _sg_mtl_pool[slot_index] = res;
-    return slot_index;
+    const uint32_t pool_index = _sg_mtl_alloc_pool_slot();
+    SOKOL_ASSERT([NSNull null] == _sg_mtl_pool[pool_index]);
+    _sg_mtl_pool[pool_index] = res;
+    return pool_index;
 }
 
 /*  mark an MTLResource for release, this will put the resource into the
@@ -419,15 +414,15 @@ _SOKOL_PRIVATE void _sg_mtl_release_resource(uint32_t frame_index, uint32_t pool
     /* release queue full? */
     SOKOL_ASSERT(_sg_mtl_release_queue_front != _sg_mtl_release_queue_back);
     SOKOL_ASSERT(0 == _sg_mtl_release_queue[slot_index].frame_index);
-    _sg_mtl_release_queue[slot_index].frame_index = frame_index;
+    const uint32_t safe_to_release_frame_index = frame_index + SG_NUM_INFLIGHT_FRAMES + 1;
+    _sg_mtl_release_queue[slot_index].frame_index = safe_to_release_frame_index;
     _sg_mtl_release_queue[slot_index].pool_index = pool_index;
 }
 
 /* run garbage-collection pass on all resources in the release-queue */
 _SOKOL_PRIVATE void _sg_mtl_garbage_collect(uint32_t frame_index) {
-    const uint32_t safe_release_frame_index = frame_index + _SG_MTL_NUM_INFLIGHT_FRAMES + 1;
     while (_sg_mtl_release_queue_back != _sg_mtl_release_queue_front) {
-        if (_sg_mtl_release_queue[_sg_mtl_release_queue_back].frame_index < safe_release_frame_index) {
+        if (frame_index < _sg_mtl_release_queue[_sg_mtl_release_queue_back].frame_index) {
             /* don't need to check further, release-items past this are too young */
             break;
         }
@@ -436,6 +431,8 @@ _SOKOL_PRIVATE void _sg_mtl_garbage_collect(uint32_t frame_index) {
         SOKOL_ASSERT(pool_index < _sg_mtl_pool_size);
         SOKOL_ASSERT(_sg_mtl_pool[pool_index] != [NSNull null]);
         _sg_mtl_pool[pool_index] = [NSNull null];
+        /* put the now free pool index back on the free queue */
+        _sg_mtl_free_pool_slot(pool_index);
         /* reset the release queue slot and advance the back index */
         _sg_mtl_release_queue[_sg_mtl_release_queue_back].frame_index = 0;
         _sg_mtl_release_queue[_sg_mtl_release_queue_back].pool_index = _SG_MTL_INVALID_POOL_INDEX;
@@ -459,6 +456,9 @@ typedef struct {
     sg_wrap wrap_u;
     sg_wrap wrap_v;
     sg_wrap wrap_w;
+    uint32_t max_anisotropy;
+    int min_lod;    /* orig min/max_lod is float, this is int(min/max_lod*1000.0) */
+    int max_lod;
     uint32_t mtl_sampler_state;
 } _sg_mtl_sampler_cache_item;
 static int _sg_mtl_sampler_cache_capacity;
@@ -470,7 +470,7 @@ _SOKOL_PRIVATE void _sg_mtl_init_sampler_cache(const sg_desc* desc) {
     _sg_mtl_sampler_cache_capacity = _sg_def(desc->mtl_sampler_cache_size, _SG_MTL_DEFAULT_SAMPLER_CACHE_CAPACITY);
     _sg_mtl_sampler_cache_size = 0;
     const int size = _sg_mtl_sampler_cache_capacity * sizeof(_sg_mtl_sampler_cache_item);
-    _sg_mtl_sampler_cache = SOKOL_MALLOC(size);
+    _sg_mtl_sampler_cache = (_sg_mtl_sampler_cache_item*)SOKOL_MALLOC(size);
     memset(_sg_mtl_sampler_cache, 0, size);
 }
 
@@ -494,12 +494,15 @@ _SOKOL_PRIVATE uint32_t _sg_mtl_create_sampler(id<MTLDevice> mtl_device, const s
     SOKOL_ASSERT(img_desc);
     SOKOL_ASSERT(_sg_mtl_sampler_cache);
     /* sampler state cache is full */
-    SOKOL_ASSERT(_sg_mtl_sampler_cache_size < _sg_mtl_sampler_cache_capacity);
     const sg_filter min_filter = _sg_def(img_desc->min_filter, SG_FILTER_NEAREST);
     const sg_filter mag_filter = _sg_def(img_desc->mag_filter, SG_FILTER_NEAREST);
     const sg_wrap wrap_u = _sg_def(img_desc->wrap_u, SG_WRAP_REPEAT);
     const sg_wrap wrap_v = _sg_def(img_desc->wrap_v, SG_WRAP_REPEAT);
     const sg_wrap wrap_w = _sg_def(img_desc->wrap_w, SG_WRAP_REPEAT);
+    const uint32_t max_anisotropy = _sg_def(img_desc->max_anisotropy, 1);
+    /* convert floats to valid int for proper comparison */
+    const int min_lod = (int)(img_desc->min_lod * 1000.0f);
+    const int max_lod = (int)(_sg_def_flt(img_desc->max_lod, 1000.0f) * 1000.0f);
     /* first try to find identical sampler, number of samplers will be small, so linear search is ok */
     for (int i = 0; i < _sg_mtl_sampler_cache_size; i++) {
         _sg_mtl_sampler_cache_item* item = &_sg_mtl_sampler_cache[i];
@@ -507,19 +510,25 @@ _SOKOL_PRIVATE uint32_t _sg_mtl_create_sampler(id<MTLDevice> mtl_device, const s
             (mag_filter == item->mag_filter) &&
             (wrap_u == item->wrap_u) &&
             (wrap_v == item->wrap_v) &&
-            (wrap_w == item->wrap_w))
+            (wrap_w == item->wrap_w) &&
+            (max_anisotropy == item->max_anisotropy) &&
+            (min_lod == item->min_lod) &&
+            (max_lod == item->max_lod))
         {
             return item->mtl_sampler_state;
         }
     }
     /* fallthrough: need to create a new MTLSamplerState object */
+    SOKOL_ASSERT(_sg_mtl_sampler_cache_size < _sg_mtl_sampler_cache_capacity);
     _sg_mtl_sampler_cache_item* new_item = &_sg_mtl_sampler_cache[_sg_mtl_sampler_cache_size++];
     new_item->min_filter = min_filter;
     new_item->mag_filter = mag_filter;
     new_item->wrap_u = wrap_u;
     new_item->wrap_v = wrap_v;
     new_item->wrap_w = wrap_w;
-
+    new_item->min_lod = min_lod;
+    new_item->max_lod = max_lod;
+    new_item->max_anisotropy = max_anisotropy;
     MTLSamplerDescriptor* mtl_desc = [[MTLSamplerDescriptor alloc] init];
     mtl_desc.sAddressMode = _sg_mtl_address_mode(wrap_u);
     mtl_desc.tAddressMode = _sg_mtl_address_mode(wrap_v);
@@ -529,9 +538,9 @@ _SOKOL_PRIVATE uint32_t _sg_mtl_create_sampler(id<MTLDevice> mtl_device, const s
     mtl_desc.minFilter = _sg_mtl_minmag_filter(min_filter);
     mtl_desc.magFilter = _sg_mtl_minmag_filter(mag_filter);
     mtl_desc.mipFilter = _sg_mtl_mip_filter(min_filter);
-    mtl_desc.lodMinClamp = 0.0f;
-    mtl_desc.lodMaxClamp = FLT_MAX;
-    mtl_desc.maxAnisotropy = 1;     /* FIXME: should be configurable */
+    mtl_desc.lodMinClamp = img_desc->min_lod;
+    mtl_desc.lodMaxClamp = _sg_def_flt(img_desc->max_lod, FLT_MAX);
+    mtl_desc.maxAnisotropy = max_anisotropy;
     mtl_desc.normalizedCoordinates = YES;
     id<MTLSamplerState> mtl_sampler = [mtl_device newSamplerStateWithDescriptor:mtl_desc];
     new_item->mtl_sampler_state = _sg_mtl_add_resource(mtl_sampler);
@@ -547,7 +556,7 @@ typedef struct {
     uint32_t upd_frame_index;
     int num_slots;
     int active_slot;
-    uint32_t mtl_buf[_SG_MTL_NUM_INFLIGHT_FRAMES];  /* index intp _sg_mtl_pool */
+    uint32_t mtl_buf[SG_NUM_INFLIGHT_FRAMES];  /* index intp _sg_mtl_pool */
 } _sg_buffer;
 
 _SOKOL_PRIVATE void _sg_init_buffer(_sg_buffer* buf) {
@@ -571,10 +580,11 @@ typedef struct {
     sg_wrap wrap_u;
     sg_wrap wrap_v;
     sg_wrap wrap_w;
+    uint32_t max_anisotropy;
     uint32_t upd_frame_index;
     int num_slots;
     int active_slot;
-    uint32_t mtl_tex[_SG_MTL_NUM_INFLIGHT_FRAMES];
+    uint32_t mtl_tex[SG_NUM_INFLIGHT_FRAMES];
     uint32_t mtl_depth_tex;
     uint32_t mtl_msaa_tex;
     uint32_t mtl_sampler_state;
@@ -621,6 +631,9 @@ typedef struct {
     sg_pixel_format color_format;
     sg_pixel_format depth_format;
     int sample_count;
+    float depth_bias;
+    float depth_bias_slope_scale;
+    float depth_bias_clamp;
     MTLPrimitiveType mtl_prim_type;
     sg_index_type index_type;
     NSUInteger mtl_index_size;
@@ -699,7 +712,7 @@ static uint32_t _sg_mtl_cur_frame_rotate_index;
 static uint32_t _sg_mtl_ub_size;
 static uint32_t _sg_mtl_cur_ub_offset;
 static uint8_t* _sg_mtl_cur_ub_base_ptr;
-static id<MTLBuffer> _sg_mtl_uniform_buffers[_SG_MTL_NUM_INFLIGHT_FRAMES];
+static id<MTLBuffer> _sg_mtl_uniform_buffers[SG_NUM_INFLIGHT_FRAMES];
 static dispatch_semaphore_t _sg_mtl_sem;
 static bool _sg_mtl_in_pass;
 static bool _sg_mtl_pass_valid;
@@ -725,14 +738,18 @@ _SOKOL_PRIVATE void _sg_setup_backend(const sg_desc* desc) {
     _sg_mtl_cur_frame_rotate_index = 0;
     _sg_mtl_cur_ub_offset = 0;
     _sg_mtl_cur_ub_base_ptr = 0;
-    _sg_mtl_device = CFBridgingRelease(desc->mtl_device);
-    _sg_mtl_sem = dispatch_semaphore_create(_SG_MTL_NUM_INFLIGHT_FRAMES);
+    _sg_mtl_device = (__bridge id<MTLDevice>) desc->mtl_device;
+    _sg_mtl_sem = dispatch_semaphore_create(SG_NUM_INFLIGHT_FRAMES);
     _sg_mtl_cmd_queue = [_sg_mtl_device newCommandQueue];
     _sg_mtl_ub_size = _sg_def(desc->mtl_global_uniform_buffer_size, _SG_MTL_DEFAULT_UB_SIZE);
-    for (int i = 0; i < _SG_MTL_NUM_INFLIGHT_FRAMES; i++) {
+    MTLResourceOptions res_opts = MTLResourceCPUCacheModeWriteCombined;
+    #if defined(SOKOL_METAL_MACOS)
+    res_opts |= MTLResourceStorageModeManaged;
+    #endif
+    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
         _sg_mtl_uniform_buffers[i] = [_sg_mtl_device
             newBufferWithLength:_sg_mtl_ub_size
-            options:MTLResourceCPUCacheModeWriteCombined|MTLResourceStorageModeManaged
+            options:res_opts
         ];
     }
 }
@@ -740,17 +757,17 @@ _SOKOL_PRIVATE void _sg_setup_backend(const sg_desc* desc) {
 _SOKOL_PRIVATE void _sg_discard_backend() {
     SOKOL_ASSERT(_sg_mtl_valid);
     /* wait for the last frame to finish */
-    for (int i = 0; i < _SG_MTL_NUM_INFLIGHT_FRAMES; i++) {
+    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
         dispatch_semaphore_wait(_sg_mtl_sem, DISPATCH_TIME_FOREVER);
     }
     _sg_mtl_destroy_sampler_cache(_sg_mtl_frame_index);
-    _sg_mtl_garbage_collect(_sg_mtl_frame_index + _SG_MTL_NUM_INFLIGHT_FRAMES + 2);
+    _sg_mtl_garbage_collect(_sg_mtl_frame_index + SG_NUM_INFLIGHT_FRAMES + 2);
     _sg_mtl_destroy_pool();
     _sg_mtl_valid = false;
     _sg_mtl_cmd_encoder = nil;
     _sg_mtl_cmd_buffer = nil;
     _sg_mtl_cmd_queue = nil;
-    for (int i = 0; i < _SG_MTL_NUM_INFLIGHT_FRAMES; i++) {
+    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
         _sg_mtl_uniform_buffers[i] = nil;
     }
     _sg_mtl_device = nil;
@@ -758,7 +775,7 @@ _SOKOL_PRIVATE void _sg_discard_backend() {
 
 _SOKOL_PRIVATE bool _sg_query_feature(sg_feature f) {
     switch (f) {
-        case SG_FEATURE_INSTANCED_ARRAYS:
+        case SG_FEATURE_INSTANCING:
         #if defined(SOKOL_METAL_MACOS)
         case SG_FEATURE_TEXTURE_COMPRESSION_DXT:
         #else
@@ -785,17 +802,24 @@ _SOKOL_PRIVATE void _sg_create_buffer(_sg_buffer* buf, const sg_buffer_desc* des
     buf->type = _sg_def(desc->type, SG_BUFFERTYPE_VERTEXBUFFER);
     buf->usage = _sg_def(desc->usage, SG_USAGE_IMMUTABLE);
     buf->upd_frame_index = 0;
-    buf->num_slots = buf->usage==SG_USAGE_STREAM ? _SG_MTL_NUM_INFLIGHT_FRAMES : 1;
+    buf->num_slots = (buf->usage == SG_USAGE_IMMUTABLE) ? 1 : SG_NUM_INFLIGHT_FRAMES;
     buf->active_slot = 0;
+    const bool injected = (0 != desc->mtl_buffers[0]);
     MTLResourceOptions mtl_options = _sg_mtl_buffer_resource_options(buf->usage);
     for (int slot = 0; slot < buf->num_slots; slot++) {
         id<MTLBuffer> mtl_buf;
-        if (buf->usage == SG_USAGE_IMMUTABLE) {
-            SOKOL_ASSERT(desc->content);
-            mtl_buf = [_sg_mtl_device newBufferWithBytes:desc->content length:buf->size options:mtl_options];
+        if (injected) {
+            SOKOL_ASSERT(desc->mtl_buffers[slot]);
+            mtl_buf = (__bridge id<MTLBuffer>) desc->mtl_buffers[slot];
         }
         else {
-            mtl_buf = [_sg_mtl_device newBufferWithLength:buf->size options:mtl_options];
+            if (buf->usage == SG_USAGE_IMMUTABLE) {
+                SOKOL_ASSERT(desc->content);
+                mtl_buf = [_sg_mtl_device newBufferWithBytes:desc->content length:buf->size options:mtl_options];
+            }
+            else {
+                mtl_buf = [_sg_mtl_device newBufferWithLength:buf->size options:mtl_options];
+            }
         }
         buf->mtl_buf[slot] = _sg_mtl_add_resource(mtl_buf);
     }
@@ -819,7 +843,7 @@ _SOKOL_PRIVATE void _sg_mtl_copy_image_content(const _sg_image* img, __unsafe_un
         for (int mip_index = 0; mip_index < img->num_mipmaps; mip_index++) {
             SOKOL_ASSERT(content->subimage[face_index][mip_index].ptr);
             SOKOL_ASSERT(content->subimage[face_index][mip_index].size > 0);
-            const uint8_t* data_ptr = content->subimage[face_index][mip_index].ptr;
+            const uint8_t* data_ptr = (const uint8_t*)content->subimage[face_index][mip_index].ptr;
             const int mip_width = _sg_max(img->width >> mip_index, 1);
             const int mip_height = _sg_max(img->height >> mip_index, 1);
             /* special case PVRTC formats: bytePerRow must be 0 */
@@ -870,12 +894,14 @@ _SOKOL_PRIVATE void _sg_create_image(_sg_image* img, const sg_image_desc* desc) 
     img->wrap_u = _sg_def(desc->wrap_u, SG_WRAP_REPEAT);
     img->wrap_v = _sg_def(desc->wrap_v, SG_WRAP_REPEAT);
     img->wrap_w = _sg_def(desc->wrap_w, SG_WRAP_REPEAT);
+    img->max_anisotropy = _sg_def(desc->max_anisotropy, 1);
     img->upd_frame_index = 0;
-    img->num_slots = img->usage==SG_USAGE_STREAM ? _SG_MTL_NUM_INFLIGHT_FRAMES : 1;
+    img->num_slots = (img->usage == SG_USAGE_IMMUTABLE) ? 1 :SG_NUM_INFLIGHT_FRAMES;
     img->active_slot = 0;
+    const bool injected = (0 != desc->mtl_textures[0]);
 
     /* first initialize all Metal resource pool slots to 'empty' */
-    for (int i = 0; i < _SG_MTL_NUM_INFLIGHT_FRAMES; i++) {
+    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
         img->mtl_tex[i] = _sg_mtl_add_resource(nil);
     }
     img->mtl_sampler_state = _sg_mtl_add_resource(nil);
@@ -929,6 +955,7 @@ _SOKOL_PRIVATE void _sg_create_image(_sg_image* img, const sg_image_desc* desc) 
         SOKOL_ASSERT(img->render_target);
         SOKOL_ASSERT(img->type == SG_IMAGETYPE_2D);
         SOKOL_ASSERT(img->num_mipmaps == 1);
+        SOKOL_ASSERT(!injected);
         if (img->sample_count > 1) {
             mtl_desc.textureType = MTLTextureType2DMultisample;
             mtl_desc.sampleCount = img->sample_count;
@@ -940,11 +967,18 @@ _SOKOL_PRIVATE void _sg_create_image(_sg_image* img, const sg_image_desc* desc) 
     else {
         /* create the color texture(s) */
         for (int slot = 0; slot < img->num_slots; slot++) {
-            id<MTLTexture> tex = [_sg_mtl_device newTextureWithDescriptor:mtl_desc];
-            img->mtl_tex[slot] = _sg_mtl_add_resource(tex);
-            if ((img->usage == SG_USAGE_IMMUTABLE) && !img->render_target) {
-                _sg_mtl_copy_image_content(img, tex, &desc->content);
+            id<MTLTexture> tex;
+            if (injected) {
+                SOKOL_ASSERT(desc->mtl_textures[slot]);
+                tex = (__bridge id<MTLTexture>) desc->mtl_textures[slot];
             }
+            else {
+                tex = [_sg_mtl_device newTextureWithDescriptor:mtl_desc];
+                if ((img->usage == SG_USAGE_IMMUTABLE) && !img->render_target) {
+                    _sg_mtl_copy_image_content(img, tex, &desc->content);
+                }
+            }
+            img->mtl_tex[slot] = _sg_mtl_add_resource(tex);
         }
 
         /* if MSAA color render target, create an additional MSAA render-surface texture */
@@ -1104,6 +1138,9 @@ _SOKOL_PRIVATE void _sg_create_pipeline(_sg_pipeline* pip, _sg_shader* shd, cons
     pip->color_format = _sg_def(desc->blend.color_format, SG_PIXELFORMAT_RGBA8);
     pip->depth_format = _sg_def(desc->blend.depth_format, SG_PIXELFORMAT_DEPTHSTENCIL);
     pip->sample_count = _sg_def(desc->rasterizer.sample_count, 1);
+    pip->depth_bias = desc->rasterizer.depth_bias;
+    pip->depth_bias_slope_scale = desc->rasterizer.depth_bias_slope_scale;
+    pip->depth_bias_clamp = desc->rasterizer.depth_bias_clamp;
     sg_primitive_type prim_type = _sg_def(desc->primitive_type, SG_PRIMITIVETYPE_TRIANGLES);
     pip->mtl_prim_type = _sg_mtl_primitive_type(prim_type);
     pip->index_type = _sg_def(desc->index_type, SG_INDEXTYPE_NONE);
@@ -1120,7 +1157,7 @@ _SOKOL_PRIVATE void _sg_create_pipeline(_sg_pipeline* pip, _sg_shader* shd, cons
 
     /* create vertex-descriptor */
     MTLVertexDescriptor* vtx_desc = [MTLVertexDescriptor vertexDescriptor];
-    int mtl_attr_index = 0;
+    int auto_mtl_attr_index = 0;
     for (int layout_index = 0; layout_index < SG_MAX_SHADERSTAGE_BUFFERS; layout_index++) {
         const sg_vertex_layout_desc* layout_desc = &desc->vertex_layouts[layout_index];
         if (layout_desc->stride == 0) {
@@ -1136,11 +1173,33 @@ _SOKOL_PRIVATE void _sg_create_pipeline(_sg_pipeline* pip, _sg_shader* shd, cons
             if (attr_desc->format == SG_VERTEXFORMAT_INVALID) {
                 break;
             }
-            SOKOL_ASSERT(mtl_attr_index < SG_MAX_VERTEX_ATTRIBUTES);
-            vtx_desc.attributes[mtl_attr_index].format = _sg_mtl_vertex_format(attr_desc->format);
-            vtx_desc.attributes[mtl_attr_index].offset = attr_desc->offset;
-            vtx_desc.attributes[mtl_attr_index].bufferIndex = mtl_vb_slot;
-            mtl_attr_index++;
+            SOKOL_ASSERT(auto_mtl_attr_index < SG_MAX_VERTEX_ATTRIBUTES);
+            /* if an attribute name is provided, lookup the Metal attribute index,
+               otherwise use the implicit location
+            */
+            int mtl_attr_index = -1;
+            if (attr_desc->name) {
+                id<MTLFunction> mtl_vs_func = _sg_mtl_pool[shd->stage[SG_SHADERSTAGE_VS].mtl_func];
+                for (MTLVertexAttribute* mtl_attr in mtl_vs_func.vertexAttributes) {
+                    if (0 == strcmp(mtl_attr.name.UTF8String, attr_desc->name)) {
+                        mtl_attr_index = mtl_attr.attributeIndex;
+                        break;
+                    }
+                }
+                if (-1 == mtl_attr_index) {
+                    SOKOL_LOG("Named vertex attribute not found in shader: ");
+                    SOKOL_LOG(attr_desc->name);
+                }
+            }
+            else {
+                mtl_attr_index = auto_mtl_attr_index;
+            }
+            if (mtl_attr_index != -1) {
+                vtx_desc.attributes[mtl_attr_index].format = _sg_mtl_vertex_format(attr_desc->format);
+                vtx_desc.attributes[mtl_attr_index].offset = attr_desc->offset;
+                vtx_desc.attributes[mtl_attr_index].bufferIndex = mtl_vb_slot;
+            }
+            auto_mtl_attr_index++;
         }
     }
 
@@ -1155,13 +1214,20 @@ _SOKOL_PRIVATE void _sg_create_pipeline(_sg_pipeline* pip, _sg_shader* shd, cons
     rp_desc.alphaToCoverageEnabled = desc->rasterizer.alpha_to_coverage_enabled;
     rp_desc.alphaToOneEnabled = NO;
     rp_desc.rasterizationEnabled = YES;
-    rp_desc.inputPrimitiveTopology = _sg_mtl_primitive_topology_class(prim_type);
     rp_desc.depthAttachmentPixelFormat = _sg_mtl_rendertarget_depth_format(_sg_def(desc->blend.depth_format, SG_PIXELFORMAT_DEPTHSTENCIL));
     rp_desc.stencilAttachmentPixelFormat = _sg_mtl_rendertarget_stencil_format(_sg_def(desc->blend.depth_format, SG_PIXELFORMAT_DEPTHSTENCIL));
+    /* FIXME: this only works on macOS 10.13!
+    for (int i = 0; i < (SG_MAX_SHADERSTAGE_UBS+SG_MAX_SHADERSTAGE_BUFFERS); i++) {
+        rp_desc.vertexBuffers[i].mutability = MTLMutabilityImmutable;
+    }
+    for (int i = 0; i < SG_MAX_SHADERSTAGE_UBS; i++) {
+        rp_desc.fragmentBuffers[i].mutability = MTLMutabilityImmutable;
+    }
+    */
     const int att_count = _sg_def(desc->blend.color_attachment_count, 1);
     for (int i = 0; i < att_count; i++) {
         rp_desc.colorAttachments[i].pixelFormat = _sg_mtl_rendertarget_color_format(_sg_def(desc->blend.color_format, SG_PIXELFORMAT_RGBA8));
-        rp_desc.colorAttachments[i].writeMask = _sg_mtl_color_write_mask(_sg_def(desc->blend.color_write_mask, SG_COLORMASK_RGBA));
+        rp_desc.colorAttachments[i].writeMask = _sg_mtl_color_write_mask((sg_color_mask)_sg_def(desc->blend.color_write_mask, SG_COLORMASK_RGBA));
         rp_desc.colorAttachments[i].blendingEnabled = desc->blend.enabled;
         rp_desc.colorAttachments[i].alphaBlendOperation = _sg_mtl_blend_op(_sg_def(desc->blend.op_alpha, SG_BLENDOP_ADD));
         rp_desc.colorAttachments[i].rgbBlendOperation = _sg_mtl_blend_op(_sg_def(desc->blend.op_rgb, SG_BLENDOP_ADD));
@@ -1292,7 +1358,7 @@ _SOKOL_PRIVATE void _sg_begin_pass(_sg_pass* pass, const sg_pass_action* action,
     }
     else {
         /* default render pass, call user-provided callback to provide render pass descriptor */
-        pass_desc = CFBridgingRelease(_sg_mtl_renderpass_descriptor_cb());
+        pass_desc = (__bridge MTLRenderPassDescriptor*) _sg_mtl_renderpass_descriptor_cb();
 
     }
     if (pass_desc) {
@@ -1420,7 +1486,7 @@ _SOKOL_PRIVATE void _sg_commit() {
     #endif
 
     /* present, commit and signal semaphore when done */
-    id cur_drawable = CFBridgingRelease(_sg_mtl_drawable_cb());
+    id<MTLDrawable> cur_drawable = (__bridge id<MTLDrawable>) _sg_mtl_drawable_cb();
     [_sg_mtl_cmd_buffer presentDrawable:cur_drawable];
     __block dispatch_semaphore_t sem = _sg_mtl_sem;
     [_sg_mtl_cmd_buffer addCompletedHandler:^(id<MTLCommandBuffer> cmd_buffer) {
@@ -1432,7 +1498,7 @@ _SOKOL_PRIVATE void _sg_commit() {
     _sg_mtl_garbage_collect(_sg_mtl_frame_index);
 
     /* rotate uniform buffer slot */
-    if (++_sg_mtl_cur_frame_rotate_index >= _SG_MTL_NUM_INFLIGHT_FRAMES) {
+    if (++_sg_mtl_cur_frame_rotate_index >= SG_NUM_INFLIGHT_FRAMES) {
         _sg_mtl_cur_frame_rotate_index = 0;
     }
     _sg_mtl_frame_index++;
@@ -1513,10 +1579,12 @@ _SOKOL_PRIVATE void _sg_apply_draw_state(
         _sg_mtl_cur_pipeline = pip;
         _sg_mtl_cur_pipeline_id.id = pip->slot.id;
         const float* c = pip->blend_color;
+        /* FIXME: those should be filtered through a simple state cache */
         [_sg_mtl_cmd_encoder setBlendColorRed:c[0] green:c[1] blue:c[2] alpha:c[3]];
         [_sg_mtl_cmd_encoder setCullMode:pip->mtl_cull_mode];
         [_sg_mtl_cmd_encoder setFrontFacingWinding:pip->mtl_winding];
         [_sg_mtl_cmd_encoder setStencilReferenceValue:pip->mtl_stencil_ref];
+        [_sg_mtl_cmd_encoder setDepthBias:pip->depth_bias slopeScale:pip->depth_bias_slope_scale clamp:pip->depth_bias_clamp];
         SOKOL_ASSERT(pip->mtl_rps != _SG_MTL_INVALID_POOL_INDEX);
         [_sg_mtl_cmd_encoder setRenderPipelineState:_sg_mtl_pool[pip->mtl_rps]];
         SOKOL_ASSERT(pip->mtl_dss != _SG_MTL_INVALID_POOL_INDEX);
@@ -1580,7 +1648,7 @@ _SOKOL_PRIVATE void _sg_apply_uniform_block(sg_shader_stage stage_index, int ub_
     SOKOL_ASSERT(_sg_mtl_cur_pipeline->slot.id == _sg_mtl_cur_pipeline_id.id);
     SOKOL_ASSERT(_sg_mtl_cur_pipeline->shader->slot.id == _sg_mtl_cur_pipeline->shader_id.id);
     SOKOL_ASSERT(ub_index < _sg_mtl_cur_pipeline->shader->stage[stage_index].num_uniform_blocks);
-    SOKOL_ASSERT(num_bytes == _sg_mtl_cur_pipeline->shader->stage[stage_index].uniform_blocks[ub_index].size);
+    SOKOL_ASSERT(num_bytes <= _sg_mtl_cur_pipeline->shader->stage[stage_index].uniform_blocks[ub_index].size);
 
     /* copy to global uniform buffer, record offset into cmd encoder, and advance offset */
     uint8_t* dst = &_sg_mtl_cur_ub_base_ptr[_sg_mtl_cur_ub_offset];

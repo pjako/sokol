@@ -55,7 +55,7 @@
 
     sokol_gfx DOES NOT:
     ===================
-    - create a window or the 3D-API contex/device, you must do this
+    - create a window or the 3D-API context/device, you must do this
       before sokol_gfx is initialized, and pass any required information
       (like 3D device pointers) to the sokol_gfx initialization call
 
@@ -109,7 +109,7 @@
 
     --- kick off a draw call with:
     
-            sg_draw(int base_element, int num_elements, int num_instaces) 
+            sg_draw(int base_element, int num_elements, int num_instances)
 
     --- finish the current rendering pass with:
             
@@ -176,7 +176,7 @@
                 float offset2[2];
             } params_t;
              
-            // uniform block structure and texture image defintion in sg_shader_desc:
+            // uniform block structure and texture image definition in sg_shader_desc:
             sg_shader_desc desc = {
                 // uniform block description (size and internal structure)
                 .vs.uniform_blocks[0] = {
@@ -217,7 +217,7 @@
             };
 
     --- on D3D11 you need to provide a semantic name and semantic index in the
-        vertex attribute definition instead (see the D3D11 documentaion on
+        vertex attribute definition instead (see the D3D11 documentation on
         D3D11_INPUT_ELEMENT_DESC for details):
 
             sg_pipeline_desc desc = {
@@ -243,6 +243,41 @@
                     }
                 }
             };
+
+    TODO:
+    ====
+    - talk about asynchronous resource creation
+    
+    FIXME:
+    ======
+    - The vertex attribute declaration in sg_pipeline_desc without names 
+      doesn't work well with multiple input layouts, because it assumes
+      that the attribute locations across input layouts matches the
+      order of vertex attributes in the the shader. Metal solves this
+      cleanly by having a single vertex attribute array where each
+      attribute defines the buffer bind slot.
+
+    MIT License
+
+    Copyright (c) 2017 Andre Weissflog
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.    
 */
 #include <stdint.h>
 #include <stdbool.h>
@@ -287,6 +322,7 @@ typedef struct { uint32_t id; } sg_pass;
 enum {
     SG_INVALID_ID = 0,
     SG_NUM_SHADER_STAGES = 2,
+    SG_NUM_INFLIGHT_FRAMES = 2,
     SG_MAX_COLOR_ATTACHMENTS = 4,
     SG_MAX_SHADERSTAGE_BUFFERS = 4,
     SG_MAX_SHADERSTAGE_IMAGES = 12,
@@ -304,7 +340,7 @@ enum {
     sg_query_feature() to check whether the feature is supported.
 */
 typedef enum {
-    SG_FEATURE_INSTANCED_ARRAYS,
+    SG_FEATURE_INSTANCING,
     SG_FEATURE_TEXTURE_COMPRESSION_DXT,
     SG_FEATURE_TEXTURE_COMPRESSION_PVRTC,
     SG_FEATURE_TEXTURE_COMPRESSION_ATC,
@@ -336,12 +372,16 @@ typedef enum {
     initialized by the user application. If a resource which is not
     in the VALID state is attempted to be used for rendering, rendering
     operations will silently be dropped.
+
+    The special INVALID state is returned in sg_query_xxx_state() if no
+    resource object exists for the provided resource id.
 */
 typedef enum {
     SG_RESOURCESTATE_INITIAL,
     SG_RESOURCESTATE_ALLOC,
     SG_RESOURCESTATE_VALID,
     SG_RESOURCESTATE_FAILED,
+    SG_RESOURCESTATE_INVALID
 } sg_resource_state;
 
 /*
@@ -910,22 +950,27 @@ typedef struct {
         to traditional WebGL if a browser doesn't support a WebGL2 context
 
     Metal specific:
+        (NOTE: All Objective-C object references are transferred through
+        a bridged (const void*) to sokol_gfx, which will use a unretained
+        bridged cast (__bridged id<xxx>) to retrieve the Objective-C
+        references back. Since the bridge cast is unretained, the caller
+        must hold a strong reference to the Objective-C object for the 
+        duration of the sokol_gfx call!
+
     .mtl_device     
-        a pointer to the MTLDevice object, obtained with CFBridgingRetain()
+        a pointer to the MTLDevice object
     .mtl_renderpass_descriptor_cb
-        a C callback function to obtain the MTLRenderPassDescriptor for the
-        current frame when rendering to the default framebuffer, will be called 
-        in sg_begin_default_pass(), the pointer must be obtained with
-        CFBridgingRetain()
+        a C callback function to obtain the MTLRenderPassDescriptor for the 
+        current frame when rendering to the default framebuffer, will be called
+        in sg_begin_default_pass()
     .mtl_drawable_cb
-        a C callback function to obtain a CAMetalDrawable for the current
+        a C callback function to obtain a MTLDrawable for the current
         frame when rendering to the default framebuffer, will be called in
-        sg_end_pass() of the default pass. the pointer must be obtained
-        with CFBridgingRetain()
+        sg_end_pass() of the default pass
     .mtl_global_uniform_buffer_size
         the size of the global uniform buffer in bytes, this must be big
         enough to hold all uniform block updates for a single frame,
-        the default vale is 4 MByte (4 * 1024 * 1024) 
+        the default value is 4 MByte (4 * 1024 * 1024)
     .mtl_sampler_cache_size
         the number of slots in the sampler cache, the Metal backend
         will share texture samplers with the same state in this 
@@ -943,7 +988,7 @@ typedef struct {
         this function will be called in sg_begin_pass() when rendering
         to the default framebuffer
     .d3d11_depth_stencil_view_cb
-        a C callback fnction to obtain a pointer to the current
+        a C callback function to obtain a pointer to the current
         ID3D11DepthStencilView object of the default framebuffer,
         this function will be called in sg_begin_pass() when rendering
         to the default framebuffer
@@ -987,6 +1032,29 @@ typedef struct {
     Buffers with the SG_USAGE_IMMUTABLE usage *must* fill the buffer
     with initial data (.content must point to a data chunk with
     exactly .size bytes).
+
+    ADVANCED TOPIC: Injecting native 3D-API buffers:
+
+    The following struct members allow to inject your own GL, Metal
+    or D3D11 buffers into sokol_gfx:
+    
+    .gl_buffers[SG_NUM_INFLIGHT_FRAMES]
+    .mtl_buffers[SG_NUM_INFLIGHT_FRAMES]
+    .d3d11_buffer
+
+    You must still provide all other members except the .content member, and
+    these must match the creation parameters of the native buffers you
+    provide. For SG_USAGE_IMMUTABLE, only provide a single native 3D-API
+    buffer, otherwise you need to provide SG_NUM_INFLIGHT_FRAMES buffers
+    (only for GL and Metal, not D3D11). Providing multiple buffers for GL and
+    Metal is necessary because sokol_gfx will rotate through them when
+    calling sg_update_buffer() to prevent lock-stalls.
+
+    Note that it is expected that immutable injected buffer have already been
+    initialized with content, and the .content member must be 0!
+
+    Also you need to call sg_reset_state_cache() after calling native 3D-API
+    functions, and before calling any sokol_gfx function.
 */
 typedef struct {
     uint32_t _start_canary;
@@ -994,6 +1062,12 @@ typedef struct {
     sg_buffer_type type;
     sg_usage usage;
     const void* content;
+    /* GL specific */
+    uint32_t gl_buffers[SG_NUM_INFLIGHT_FRAMES];
+    /* Metal specific */
+    const void* mtl_buffers[SG_NUM_INFLIGHT_FRAMES];
+    /* D3D11 specific */
+    const void* d3d11_buffer;
     uint32_t _end_canary;
 } sg_buffer_desc;
 
@@ -1048,6 +1122,9 @@ typedef struct {
     .wrap_u:            SG_WRAP_REPEAT
     .wrap_v:            SG_WRAP_REPEAT
     .wrap_w:            SG_WRAP_REPEAT (only SG_IMAGETYPE_3D)
+    .max_anisotropy     1 (must be 1..16)
+    .min_lod            0.0f
+    .max_lod            FLT_MAX
     .content            an sg_image_content struct to define the initial content 
 
     SG_IMAGETYPE_ARRAY and SG_IMAGETYPE_3D are not supported on
@@ -1058,6 +1135,18 @@ typedef struct {
     Images with usage SG_USAGE_IMMUTABLE must be fully initialized by
     providing a valid .content member which points to
     initialization data.
+    
+    ADVANCED TOPIC: Injecting native 3D-API textures:
+
+    The following struct members allow to inject your own GL, Metal
+    or D3D11 textures into sokol_gfx:
+    
+    .gl_textures[SG_NUM_INFLIGHT_FRAMES]
+    .mtl_textures[SG_NUM_INFLIGHT_FRAMES]
+    .d3d11_texture
+
+    The same rules apply as for injecting native buffers
+    (see sg_buffer_desc documentation for more details).
 */
 typedef struct {
     uint32_t _start_canary;
@@ -1078,7 +1167,16 @@ typedef struct {
     sg_wrap wrap_u;
     sg_wrap wrap_v;
     sg_wrap wrap_w;
+    uint32_t max_anisotropy;
+    float min_lod;
+    float max_lod;
     sg_image_content content;
+    /* GL specific */
+    uint32_t gl_textures[SG_NUM_INFLIGHT_FRAMES];
+    /* Metal specific */
+    const void* mtl_textures[SG_NUM_INFLIGHT_FRAMES];
+    /* D3D11 specific */
+    const void* d3d11_texture;
     uint32_t _end_canary;
 } sg_image_desc;
 
@@ -1171,9 +1269,9 @@ typedef struct {
         .op_rgb:                SG_BLENDOP_ADD
         .src_factor_alpha:      SG_BLENDFACTOR_ONE
         .dst_factor_alpha:      SG_BLENDFACTOR_ZERO
-        .op_rgb:                SG_BLENDOP_ADD
+        .op_alpha:              SG_BLENDOP_ADD
         .color_write_mask:      SG_COLORMASK_RGBA
-        .color_attchment_count  1
+        .color_attachment_count 1
         .color_format           SG_PIXELFORMAT_RGBA8
         .depth_format           SG_PIXELFORMAT_DEPTHSTENCIL
         .blend_color:           { 0.0f, 0.0f, 0.0f, 0.0f }
@@ -1182,6 +1280,9 @@ typedef struct {
         .cull_mode:                     SG_CULLMODE_NONE
         .face_winding:                  SG_FACEWINDING_CW
         .sample_count:                  1
+        .depth_bias:                    0.0f
+        .depth_bias_slope_scale:        0.0f
+        .depth_bias_clamp:              0.0f
 */
 typedef struct {
     const char* name;
@@ -1236,6 +1337,9 @@ typedef struct {
     sg_cull_mode cull_mode;
     sg_face_winding face_winding;
     int sample_count;
+    float depth_bias;
+    float depth_bias_slope_scale;
+    float depth_bias_clamp;
 } sg_rasterizer_state;
 
 typedef struct {
@@ -1263,7 +1367,7 @@ typedef struct {
     if the image is a cubemap, array-texture or 3D-texture, the
     face-index, array-layer or depth-slice.
 
-    Pass images must fullfill the following requirements:
+    Pass images must fulfill the following requirements:
 
     All images must have:
     - been created as render target (sg_image_desc.render_target = true)
@@ -1297,6 +1401,7 @@ extern bool sg_isvalid();
 extern bool sg_query_feature(sg_feature feature);
 extern void sg_reset_state_cache();
 
+
 /* resource creation, destruction and updating */
 extern sg_buffer sg_make_buffer(const sg_buffer_desc* desc);
 extern sg_image sg_make_image(const sg_image_desc* desc);
@@ -1310,6 +1415,13 @@ extern void sg_destroy_pipeline(sg_pipeline pip);
 extern void sg_destroy_pass(sg_pass pass);
 extern void sg_update_buffer(sg_buffer buf, const void* data_ptr, int data_size);
 extern void sg_update_image(sg_image img, const sg_image_content* data); 
+
+/* get resource state (initial, alloc, valid, failed) */
+extern sg_resource_state sg_query_buffer_state(sg_buffer buf);
+extern sg_resource_state sg_query_image_state(sg_image img);
+extern sg_resource_state sg_query_shader_state(sg_shader shd);
+extern sg_resource_state sg_query_pipeline_state(sg_pipeline pip);
+extern sg_resource_state sg_query_pass_state(sg_pass pass);
 
 /* rendering functions */
 extern void sg_begin_default_pass(const sg_pass_action* pass_action, int width, int height);
@@ -1333,6 +1445,11 @@ extern void sg_init_image(sg_image img_id, const sg_image_desc* desc);
 extern void sg_init_shader(sg_shader shd_id, const sg_shader_desc* desc);
 extern void sg_init_pipeline(sg_pipeline pip_id, const sg_pipeline_desc* desc);
 extern void sg_init_pass(sg_pass pass_id, const sg_pass_desc* desc);
+extern void sg_fail_buffer(sg_buffer buf_id);
+extern void sg_fail_image(sg_image img_id);
+extern void sg_fail_shader(sg_shader shd_id);
+extern void sg_fail_pipeline(sg_pipeline pip_id);
+extern void sg_fail_pass(sg_pass pass_id);
 
 /* struct setup helper methods (useful for C++) */
 extern sg_vertex_attr_desc sg_named_attr(const char* name, int offset, sg_vertex_format format);
