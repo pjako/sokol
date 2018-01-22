@@ -836,7 +836,7 @@ float se_get_window_y() {
 };
 
 /* return current MTKView drawable width */
-bool se_get_window_size(int *width, int *height) {
+void se_get_window_size(int *width, int *height) {
 #ifdef SOKOL_METAL_MACOS
     *width = (int) [_se_mtk_view drawableSize].width;
     *height = (int) [_se_mtk_view drawableSize].height;
@@ -845,7 +845,6 @@ bool se_get_window_size(int *width, int *height) {
     *width = (int) size.width;
     *height = (int) size.height;
 #endif
-    return true;
 }
 
 void se_request_attention() {
@@ -995,7 +994,7 @@ const char* se_get_config_path() {
 }
 
 const char* se_get_data_path() {
-    return _se_has_environment("XDG_DATA_HOME") ? _se_get_environment("XDG_DATA_HOME") : _se_get_environment("");
+    return _se_has_environment("XDG_DATA_HOME") ? _se_get_environment("XDG_DATA_HOME") : se_get_config_path();
 }
 
 

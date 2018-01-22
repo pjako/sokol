@@ -85,7 +85,7 @@ extern void se_set_window_size(float width, float height);
 extern bool se_get_window_position(float *x, float *y);
 extern float se_get_window_x();
 extern float se_get_window_y();
-extern bool se_get_window_size(int *width, int *height);
+extern void se_get_window_size(int *width, int *height);
 extern int se_get_window_width();
 extern int se_get_window_height();
 extern void se_set_window_resizable(bool);
