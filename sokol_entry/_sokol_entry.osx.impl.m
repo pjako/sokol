@@ -151,7 +151,9 @@ void _se_run() {
 
 int main(int argc, char * argv[]) {
     //_se_is_window_fullscreen = false;
-    se_main();
+    @autoreleasepool {
+        se_main();
+    }
     return 0;
 }
 
@@ -176,12 +178,12 @@ int main(int argc, char * argv[]) {
 #ifdef SOKOL_METAL_MACOS
 /* get an MTLRenderPassDescriptor from the MTKView */
 const void* se_mtk_get_render_pass_descriptor() {
-    return CFBridgingRetain([_se_mtk_view currentRenderPassDescriptor]);
+    return (__bridge const void*) [_se_mtk_view currentRenderPassDescriptor];
 }
 
 /* get the current CAMetalDrawable from MTKView */
 const void* se_mtk_get_drawable() {
-    return CFBridgingRetain([_se_mtk_view currentDrawable]);
+    return (__bridge const void*) [_se_mtk_view currentDrawable];
 }
 #endif
 //------------------------------------------------------------------------------
@@ -231,7 +233,9 @@ const void* se_mtk_get_drawable() {
         .mtl_drawable_cb = se_mtk_get_drawable,
     };
     if (_se_init_func) {
-        _se_init_func(&ctx);
+        @autoreleasepool {
+            _se_init_func(&ctx);
+        }
     }
     [_se_window makeKeyAndOrderFront:nil];
 

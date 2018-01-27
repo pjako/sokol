@@ -60,12 +60,12 @@ static GLKViewController* _se_glk_view_controller;
 #if SOKOL_METAL_IOS
 /* get an MTLRenderPassDescriptor from the MTKView */
 const void* se_mtk_get_render_pass_descriptor() {
-    return CFBridgingRetain([_se_mtk_view currentRenderPassDescriptor]);
+    return (__bridge const void*) [_se_mtk_view currentRenderPassDescriptor];
 }
 
 /* get the current CAMetalDrawable from MTKView */
 const void* se_mtk_get_drawable() {
-    return CFBridgingRetain([_se_mtk_view currentDrawable]);
+    return (__bridge const void*) [_se_mtk_view currentDrawable];
 }
 #endif
 
@@ -103,7 +103,9 @@ const void* se_mtk_get_drawable() {
         .mtl_renderpass_descriptor_cb = se_mtk_get_render_pass_descriptor,
         .mtl_drawable_cb = se_mtk_get_drawable,
     };
-    _se_init_func(&ctx);
+    @autoreleasepool {
+        _se_init_func(&ctx);
+    }
 
     #else
     // create GL context and GLKView
@@ -140,7 +142,9 @@ const void* se_mtk_get_drawable() {
         .gl_force_gles2 = false,
         #endif
     };
-    _se_init_func(&ctx);
+    @autoreleasepool {
+        _se_init_func(&ctx);
+    }
 
     #endif
 
@@ -297,8 +301,8 @@ float _se_get_time() {
 }
 
 int main(int argc, char * argv[]) {
-    //_se_is_window_fullscreen = false;
-    se_main();
-    if ()
+    @autoreleasepool {
+        se_main();
+    }
     return 0;
 }
