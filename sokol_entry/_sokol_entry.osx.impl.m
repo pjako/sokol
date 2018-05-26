@@ -840,10 +840,10 @@ float se_get_window_y() {
 };
 
 /* return current MTKView drawable width */
-void se_get_window_size(int *width, int *height) {
+void se_get_window_size(float *width, float *height) {
 #ifdef SOKOL_METAL_MACOS
-    *width = (int) [_se_mtk_view drawableSize].width;
-    *height = (int) [_se_mtk_view drawableSize].height;
+    *width = [_se_mtk_view drawableSize].width;
+    *height = [_se_mtk_view drawableSize].height;
 #else
     NSSize size = _se_gl_view.frame.size;
     *width = (int) size.width;
@@ -860,15 +860,15 @@ float _se_get_time() {
 }
 
 /* return current MTKView drawable width */
-int se_get_window_width() {
-    int width, height;
+float se_get_window_width() {
+    float width, height;
     se_get_window_size(&width, &height);
     return width;
 }
 
 /* return current MTKView drawable height */
-int se_get_window_height() {
-    int width, height;
+float se_get_window_height() {
+    float width, height;
     se_get_window_size(&width, &height);
     return height;
 }
